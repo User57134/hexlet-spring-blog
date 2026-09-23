@@ -3,7 +3,12 @@ package io.hexlet.model;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.ResponseEntity;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -13,23 +18,39 @@ public class PostsController {
     // Хранилище добавленных страниц, то есть обычный список
     private List<Post> posts = new ArrayList<Post>();
 
-    // Список постов
-    @GetMapping("/posts")
-    public List<Post> index(@RequestParam(defaultValue = "10") Integer limit) {
-        return posts.stream().limit(limit).toList();
-    }
-
     // Создание поста
     @PostMapping("/posts")
-    public Post create(@RequestBody Post post) {
+    public ResponseEntity<Post> create(@RequestBody Post post) {
         posts.add(post);
-        return post;
+
+        var createdPost = posts.getLast();
+        try {
+            var createdUri = new URI("/posts/" + createdPost.getSlug());
+            return ResponseEntity.created(createdUri).body(createdPost);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // Список постов
+    @GetMapping("/posts")
+    public ResponseEntity<List<Post>> index(@RequestParam(defaultValue = "10") Integer limit) {
+        var result = posts.stream().limit(limit).toList();
+
+        return ResponseEntity
+                .ok()
+                .header("X-Total-Count", String.valueOf(result.size()))
+                .body(result);
     }
 
     @GetMapping("/posts/{id}") // Вывод страницы
-    public Optional<Post> show(@PathVariable String id) {
-        var post = posts.stream().filter(p -> p.getSlug().equals(id)).findFirst();
-        return post;
+    public ResponseEntity<Post> show(@PathVariable String id) {
+        var post = posts.stream()
+                .filter(p -> p.getSlug().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+
+        return ResponseEntity.ok().body(post);
     }
 
     @PutMapping("/posts/{id}") // Обновление страницы
@@ -57,7 +78,11 @@ public class PostsController {
     }
 
     @DeleteMapping("/posts/{id}") // Удаление страницы
-    public void destroy(@PathVariable String id) {
-        posts.removeIf(p -> p.getSlug().equals(id));
+    public ResponseEntity<Void> destroy(@PathVariable String id) {
+        if (posts.removeIf(p -> p.getSlug().equals(id))) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.notFound().build();
     }
 }
