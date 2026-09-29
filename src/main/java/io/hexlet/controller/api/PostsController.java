@@ -1,19 +1,19 @@
-package io.hexlet.model;
+package io.hexlet.controller.api;
 
+import io.hexlet.model.Post;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ResponseEntity;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+
 
 @RestController
+@RequestMapping("/api")
 public class PostsController {
     // Хранилище добавленных страниц, то есть обычный список
     private List<Post> posts = new ArrayList<Post>();
