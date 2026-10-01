@@ -1,6 +1,8 @@
 package io.hexlet.controller.api;
 
 import io.hexlet.model.Post;
+import io.hexlet.repository.PostRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,18 +17,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class PostsController {
-    // Хранилище добавленных страниц, то есть обычный список
-    private List<Post> posts = new ArrayList<Post>();
+
+    private PostRepository repository;
+
+    @Autowired
+    public PostsController(PostRepository postRepository) {
+        repository = postRepository;
+    }
 
     // Создание поста
     @PostMapping("/posts")
     public ResponseEntity<Post> create(@RequestBody Post post) {
-        posts.add(post);
+        var savedPost = repository.save(post);
 
-        var createdPost = posts.getLast();
         try {
-            var createdUri = new URI("/posts/" + createdPost.getSlug());
-            return ResponseEntity.created(createdUri).body(createdPost);
+            var createdUri = new URI("/posts/" + savedPost.getId());
+            return ResponseEntity.created(createdUri).body(savedPost);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
@@ -35,7 +41,7 @@ public class PostsController {
     // Список постов
     @GetMapping("/posts")
     public ResponseEntity<List<Post>> index(@RequestParam(defaultValue = "10") Integer limit) {
-        var result = posts.stream().limit(limit).toList();
+        var result = repository.findAll();
 
         return ResponseEntity
                 .ok()
@@ -44,22 +50,20 @@ public class PostsController {
     }
 
     @GetMapping("/posts/{id}") // Вывод страницы
-    public ResponseEntity<Post> show(@PathVariable String id) {
-        var post = posts.stream()
-                .filter(p -> p.getSlug().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+    public ResponseEntity<Post> show(@PathVariable Long id) {
+        var post = repository.findById(id);
 
-        return ResponseEntity.ok().body(post);
+        return ResponseEntity.of(post);
     }
 
     @PutMapping("/posts/{id}") // Обновление страницы
-    public Post update(@PathVariable String id, @RequestBody Post data) {
-        var post =
-                posts.stream()
-                        .filter(p -> p.getSlug().equals(id))
-                        .findFirst()
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    public Post update(@PathVariable Long id, @RequestBody Post data) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+
+        var post = repository.findById(id).get();
+
 
         var title = data.getTitle();
         if (title != null && !title.isEmpty()) {
@@ -71,15 +75,17 @@ public class PostsController {
             post.setContent(content);
         }
 
+        post.setPublished(data.isPublished());
         post.setAuthor(data.getAuthor());
         post.setCreatedAt(data.getCreatedAt());
 
-        return post;
+        return repository.save(post);
     }
 
     @DeleteMapping("/posts/{id}") // Удаление страницы
-    public ResponseEntity<Void> destroy(@PathVariable String id) {
-        if (posts.removeIf(p -> p.getSlug().equals(id))) {
+    public ResponseEntity<Void> destroy(@PathVariable Long id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
             return ResponseEntity.noContent().build();
         }
 

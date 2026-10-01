@@ -1,17 +1,32 @@
 package io.hexlet.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import static jakarta.persistence.GenerationType.IDENTITY;
 
-@Getter
-@Setter
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.Instant;
+
+@Entity
+@Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
+    @Id
+    @GeneratedValue(strategy = IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
-    private String name;
+
+    private String firstName;
+
+    private String lastName;
+
+    @Column(nullable = false)
     private String email;
+
+    private Instant birthday;
 }
 

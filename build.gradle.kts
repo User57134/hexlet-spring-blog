@@ -19,8 +19,18 @@ repositories {
 }
 
 dependencies {
+    // Подключаем бд H2
+    runtimeOnly("com.h2database:h2")
+
+    // Подключение веб-консоли H2
+    implementation("org.springframework.boot:spring-boot-h2console")
+
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+
+    // ➕ Добавьте эту зависимость для поддержки jakarta.persistence.*
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
     implementation("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
