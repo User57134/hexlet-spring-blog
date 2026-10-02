@@ -1,7 +1,9 @@
 package io.hexlet.controller.api;
 
+import io.hexlet.exception.ResourceNotFoundException;
 import io.hexlet.model.Post;
 import io.hexlet.repository.PostRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +29,7 @@ public class PostsController {
 
     // Создание поста
     @PostMapping("/posts")
-    public ResponseEntity<Post> create(@RequestBody Post post) {
+    public ResponseEntity<Post> create(@Valid @RequestBody Post post) {
         var savedPost = repository.save(post);
 
         try {
@@ -50,14 +52,14 @@ public class PostsController {
     }
 
     @GetMapping("/posts/{id}") // Вывод страницы
-    public ResponseEntity<Post> show(@PathVariable Long id) {
-        var post = repository.findById(id);
+    public Post show(@PathVariable Long id) {
+        var post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
-        return ResponseEntity.of(post);
+        return post;
     }
 
     @PutMapping("/posts/{id}") // Обновление страницы
-    public Post update(@PathVariable Long id, @RequestBody Post data) {
+    public Post update(@PathVariable Long id, @Valid @RequestBody Post data) {
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }

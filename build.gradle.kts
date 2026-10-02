@@ -28,8 +28,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
 
-    // ➕ Добавьте эту зависимость для поддержки jakarta.persistence.*
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    // Поддержка jakarta.persistence.*
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
+    // Добавляет валидацию для сущностей: @NotBlank, @Size, @Valid
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     implementation("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
