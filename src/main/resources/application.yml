@@ -25,6 +25,6 @@ logging:
 app:
   welcome-message: "Welcome to Spring blog!"    # сообщение в собственном параметре
 
-  page-size: 1
+  page-size: 3
 
   admin-email: "admin@mail.com"

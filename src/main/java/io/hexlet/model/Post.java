@@ -5,12 +5,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "posts")
 @AllArgsConstructor
 @NoArgsConstructor
@@ -32,5 +36,10 @@ public class Post {
 
     private boolean published;
 
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    @LastModifiedDate
+    private Instant updatedAt;
 }
