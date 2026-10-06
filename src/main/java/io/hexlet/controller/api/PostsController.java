@@ -5,6 +5,7 @@ import io.hexlet.model.Post;
 import io.hexlet.repository.PostRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,7 +42,7 @@ public class PostsController {
     }
 
     // Список постов
-    @GetMapping("/posts")
+    @GetMapping("/old/posts")
     public ResponseEntity<List<Post>> index(@RequestParam(defaultValue = "10") Integer limit) {
         var result = repository.findAll();
 
@@ -49,6 +50,36 @@ public class PostsController {
                 .ok()
                 .header("X-Total-Count", String.valueOf(result.size()))
                 .body(result);
+    }
+
+    @GetMapping("/posts")
+    public Page<Post> getPublishedPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String sort) {
+
+        Pageable pageable = null;
+
+        if ((sort != null) && (!sort.isBlank())) {
+            var sortParameters = sort.split(",");
+
+            var sortField = sortParameters[0].trim();
+            var sortOrder = Sort.Order.asc(sortField);
+
+            if (sortParameters.length == 2) {
+                if (sortParameters[1].trim().equalsIgnoreCase("desc")) {
+                    sortOrder = Sort.Order.desc(sortField);
+                }
+            }
+
+            pageable = PageRequest.of(page, size, Sort.by(sortOrder));
+
+        } else {
+            pageable = PageRequest.of(page, size);
+        }
+
+        var result = repository.findByPublishedTrue(pageable);
+        return result;
     }
 
     @GetMapping("/posts/{id}") // Вывод страницы

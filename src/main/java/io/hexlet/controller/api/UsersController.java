@@ -45,6 +45,7 @@ public class UsersController {
         }
 
         var users = repository.findAll();
+
         return users.stream()
                 .sorted(Comparator.comparing(User::getId))
                 .skip((page - 1) * pageSize)
