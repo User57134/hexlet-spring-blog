@@ -25,8 +25,7 @@ public class UsersController {
 
     private final UserRepository repository;
 
-    @Autowired
-    public  UsersController(UserRepository userRepository) {
+    public UsersController(UserRepository userRepository) {
         repository = userRepository;
     }
 

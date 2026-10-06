@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -21,12 +20,7 @@ import java.util.List;
 @RequestMapping("/api")
 public class PostsController {
 
-    private PostRepository repository;
-
-    @Autowired
-    public PostsController(PostRepository postRepository) {
-        repository = postRepository;
-    }
+    @Autowired private PostRepository repository;
 
     // Создание поста
     @PostMapping("/posts")
@@ -78,8 +72,7 @@ public class PostsController {
             pageable = PageRequest.of(page, size);
         }
 
-        var result = repository.findByPublishedTrue(pageable);
-        return result;
+       return repository.findByPublishedTrue(pageable);
     }
 
     @GetMapping("/posts/{id}") // Вывод страницы
