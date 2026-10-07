@@ -36,6 +36,9 @@ dependencies {
     // Добавляет валидацию для сущностей: @NotBlank, @Size, @Valid
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    // Библиотека для генерации случайных данных
+    implementation("net.datafaker:datafaker:2.7.0")
+
     implementation("org.springframework.boot:spring-boot-devtools")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

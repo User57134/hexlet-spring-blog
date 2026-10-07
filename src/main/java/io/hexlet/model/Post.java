@@ -32,7 +32,7 @@ public class Post {
 
     private String content;
 
-    private String author;
+    private Long authorId;
 
     private boolean published;
 

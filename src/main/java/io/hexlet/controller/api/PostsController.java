@@ -3,6 +3,7 @@ package io.hexlet.controller.api;
 import io.hexlet.exception.ResourceNotFoundException;
 import io.hexlet.model.Post;
 import io.hexlet.repository.PostRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,15 +26,18 @@ public class PostsController {
 
     // Создание поста
     @PostMapping("/posts")
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Post> create(@Valid @RequestBody Post post) {
-        var savedPost = repository.save(post);
+        Post savedPost = repository.save(post);
 
-        try {
-            var createdUri = new URI("/posts/" + savedPost.getId());
-            return ResponseEntity.created(createdUri).body(savedPost);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        // 2. Динамически строим URI созданного ресурса: текущий путь + /{id}
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest() // берет текущий "/posts"
+                .path("/{id}")        // добавляет переменную пути
+                .buildAndExpand(savedPost.getId()) // подставляет id нового поста
+                .toUri();
+
+        return ResponseEntity.created(location).body(savedPost);
     }
 
     // Список постов
@@ -47,6 +52,7 @@ public class PostsController {
     }
 
     @GetMapping("/posts")
+    @ResponseStatus(HttpStatus.OK)
     public Page<Post> getPublishedPosts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -75,46 +81,35 @@ public class PostsController {
        return repository.findByPublishedTrue(pageable);
     }
 
-    @GetMapping("/posts/{id}") // Вывод страницы
+    @GetMapping("/posts/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    // Вывод страницы
     public Post show(@PathVariable Long id) {
-        var post = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
-
-        return post;
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post with the id =" + id + " not found"));
     }
 
-    @PutMapping("/posts/{id}") // Обновление страницы
+    @PutMapping("/posts/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    // Обновление страницы
     public Post update(@PathVariable Long id, @Valid @RequestBody Post data) {
-        if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
-        }
+        var post = repository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Post with the id = " + id + " not found"));
 
-        var post = repository.findById(id).get();
-
-
-        var title = data.getTitle();
-        if (title != null && !title.isEmpty()) {
-            post.setTitle(title);
-        }
-
-        var content = data.getContent();
-        if (content != null && !content.isEmpty()) {
-            post.setContent(content);
-        }
-
+        post.setTitle(data.getTitle());
+        post.setContent(data.getContent());
         post.setPublished(data.isPublished());
-        post.setAuthor(data.getAuthor());
+        post.setAuthorId(data.getAuthorId());
         post.setCreatedAt(data.getCreatedAt());
 
         return repository.save(post);
     }
 
-    @DeleteMapping("/posts/{id}") // Удаление страницы
-    public ResponseEntity<Void> destroy(@PathVariable Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.notFound().build();
+    @DeleteMapping("/posts/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    // Удаление страницы
+    public void destroy(@PathVariable Long id) {
+        repository.deleteById(id);
     }
 }
