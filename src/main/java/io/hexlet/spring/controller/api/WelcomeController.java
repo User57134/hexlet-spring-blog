@@ -1,4 +1,4 @@
-package io.hexlet.controller.api;
+package io.hexlet.spring.controller.api;
 
 import lombok.Getter;
 import lombok.Setter;

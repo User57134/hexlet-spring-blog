@@ -1,9 +1,9 @@
-package io.hexlet.data;
+package io.hexlet.spring.data;
 
-import io.hexlet.model.Post;
-import io.hexlet.model.User;
-import io.hexlet.repository.PostRepository;
-import io.hexlet.repository.UserRepository;
+import io.hexlet.spring.model.Post;
+import io.hexlet.spring.model.User;
+import io.hexlet.spring.repository.PostRepository;
+import io.hexlet.spring.repository.UserRepository;
 import jakarta.annotation.PostConstruct;
 import net.datafaker.Faker;
 import org.springframework.stereotype.Component;

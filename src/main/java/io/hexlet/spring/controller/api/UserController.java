@@ -1,15 +1,9 @@
-package io.hexlet.controller.api;
+package io.hexlet.spring.controller.api;
 
-import io.hexlet.exception.ResourceNotFoundException;
-import io.hexlet.model.User;
-import io.hexlet.repository.UserRepository;
-import org.hibernate.type.descriptor.java.spi.CollectionJavaType;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.hexlet.spring.exception.ResourceNotFoundException;
+import io.hexlet.spring.model.User;
+import io.hexlet.spring.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +15,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class UsersController {
+public class UserController {
 
     private final UserRepository repository;
 
-    public UsersController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository) {
         repository = userRepository;
     }
 

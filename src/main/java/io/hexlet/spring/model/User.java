@@ -1,9 +1,8 @@
-package io.hexlet.model;
+package io.hexlet.spring.model;
+
+import static jakarta.persistence.GenerationType.IDENTITY;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -11,30 +10,28 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
-import static jakarta.persistence.GenerationType.IDENTITY;
-
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "posts")
+@Table(name = "users")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Post {
+public class User {
     @Id
     @GeneratedValue(strategy = IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
-    @NotBlank(message = "Заглавие не должно быть пустым")
-    @Size(min=3, message = "Заглавие должно быть от 3 символов длинной")
-    private String title;
+    private String firstName;
 
-    private String content;
+    private String lastName;
 
-    private Long authorId;
+    @Column(nullable = false)
+    private String email;
 
-    private boolean published;
+    private Instant birthday;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -43,3 +40,4 @@ public class Post {
     @LastModifiedDate
     private Instant updatedAt;
 }
+

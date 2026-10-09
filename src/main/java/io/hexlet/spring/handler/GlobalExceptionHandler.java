@@ -1,6 +1,6 @@
-package io.hexlet.handler;
+package io.hexlet.spring.handler;
 
-import io.hexlet.exception.ResourceNotFoundException;
+import io.hexlet.spring.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

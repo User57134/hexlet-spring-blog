@@ -1,9 +1,8 @@
-package io.hexlet.controller.api;
+package io.hexlet.spring.controller.api;
 
-import io.hexlet.exception.ResourceNotFoundException;
-import io.hexlet.model.Post;
-import io.hexlet.repository.PostRepository;
-import jakarta.servlet.http.HttpServletResponse;
+import io.hexlet.spring.exception.ResourceNotFoundException;
+import io.hexlet.spring.model.Post;
+import io.hexlet.spring.repository.PostRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -14,13 +13,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 
 @RestController
 @RequestMapping("/api")
-public class PostsController {
+public class PostController {
 
     @Autowired private PostRepository repository;
 

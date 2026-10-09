@@ -1,6 +1,6 @@
-package io.hexlet.repository;
+package io.hexlet.spring.repository;
 
-import io.hexlet.model.Post;
+import io.hexlet.spring.model.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

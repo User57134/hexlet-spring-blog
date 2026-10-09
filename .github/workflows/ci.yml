@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Копирование репозитория
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # ОБЯЗАТЕЛЬНО: Sonar нужен полный клон (со всеми коммитами), по-умолчанию берется только последний
+
+      # Установка Java
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # Копирование скачанных зависимостей
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # Сборка и тестирование
+      - name: Assemble & Test
+        run: ./gradlew assemble test
+
+      # Запуск анализатора Sonar
+      - name: Run Sonar Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonar -x test --info  # -x test - без тестирования, т.к оно уже было сделано на прошлом шаге

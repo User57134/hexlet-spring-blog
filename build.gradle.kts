@@ -9,6 +9,15 @@ plugins {
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("io.freefair.lombok") version "9.5.0"
+    jacoco
+    id("org.sonarqube") version "7.5.0.8588"
+}
+
+sonar {
+    properties {
+        property("sonar.projectKey", "User57134_hexlet-spring-blog")
+        property("sonar.organization", "user57134")
+    }
 }
 
 group = "io.hexlet"
@@ -40,9 +49,26 @@ dependencies {
     implementation("net.datafaker:datafaker:2.7.0")
 
     implementation("org.springframework.boot:spring-boot-devtools")
+
+    // Основной набор для тестирования приложений Spring: JUnit, AssertJ, Mockito, модули работы с JSON
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    // Дает проекту инфраструктуру для тестирования HTTP-эндпоинтов (веб-слоя)
+    testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+
+    // Понадобится когда мы начнем работать с аутентификацией
+    testImplementation("org.springframework.security:spring-security-test")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }

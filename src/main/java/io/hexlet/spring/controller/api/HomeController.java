@@ -1,4 +1,4 @@
-package io.hexlet.controller;
+package io.hexlet.spring.controller.api;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
