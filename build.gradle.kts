@@ -56,6 +56,9 @@ dependencies {
     // Дает проекту инфраструктуру для тестирования HTTP-эндпоинтов (веб-слоя)
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 
+    // Библиоетека для более удобной проверки ответов JSON
+    testImplementation("net.javacrumbs.json-unit:json-unit-assertj:6.2.0")
+
     // Понадобится когда мы начнем работать с аутентификацией
     testImplementation("org.springframework.security:spring-security-test")
 }
