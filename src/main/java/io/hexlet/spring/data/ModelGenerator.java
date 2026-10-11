@@ -36,7 +36,7 @@ public class ModelGenerator {
         user.setFirstName(faker.name().firstName());
         user.setLastName(faker.name().lastName());
         user.setEmail(faker.internet().emailAddress());
-        user.setBirthday(faker.timeAndDate().past());
+        user.setBirthday(faker.timeAndDate().birthday());
         return user;
     }
 

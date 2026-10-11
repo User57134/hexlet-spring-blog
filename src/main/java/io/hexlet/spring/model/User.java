@@ -9,6 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -31,7 +32,7 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    private Instant birthday;
+    private LocalDate birthday;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

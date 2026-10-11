@@ -1,6 +1,8 @@
 package io.hexlet.spring.controller.api;
 
+import io.hexlet.spring.dto.PostDTO;
 import io.hexlet.spring.exception.ResourceNotFoundException;
+import io.hexlet.spring.mapper.DtoMapper;
 import io.hexlet.spring.model.Post;
 import io.hexlet.spring.repository.PostRepository;
 import jakarta.validation.Valid;
@@ -20,12 +22,19 @@ import java.util.List;
 @RequestMapping("/api")
 public class PostController {
 
-    @Autowired private PostRepository repository;
+    private final PostRepository repository;
+    private final DtoMapper mapper;
+
+    @Autowired
+    public PostController(PostRepository postRepository, DtoMapper dtoMapper) {
+        repository = postRepository;
+        mapper = dtoMapper;
+    }
 
     // Создание поста
     @PostMapping("/posts")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Post> create(@Valid @RequestBody Post post) {
+    public ResponseEntity<PostDTO> create(@Valid @RequestBody Post post) {
         Post savedPost = repository.save(post);
 
         // 2. Динамически строим URI созданного ресурса: текущий путь + /{id}
@@ -35,23 +44,24 @@ public class PostController {
                 .buildAndExpand(savedPost.getId()) // подставляет id нового поста
                 .toUri();
 
-        return ResponseEntity.created(location).body(savedPost);
+        return ResponseEntity.created(location).body(mapper.map(savedPost));
     }
 
     // Список постов
     @GetMapping("/old/posts")
-    public ResponseEntity<List<Post>> index(@RequestParam(defaultValue = "10") Integer limit) {
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<List<PostDTO>> index(@RequestParam(defaultValue = "10") Integer limit) {
         var result = repository.findAll();
 
         return ResponseEntity
                 .ok()
                 .header("X-Total-Count", String.valueOf(result.size()))
-                .body(result);
+                .body(result.stream().map(mapper::map).toList());
     }
 
     @GetMapping("/posts")
     @ResponseStatus(HttpStatus.OK)
-    public Page<Post> indexOfPublished(
+    public Page<PostDTO> indexOfPublished(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort) {
@@ -76,21 +86,23 @@ public class PostController {
             pageable = PageRequest.of(page, size);
         }
 
-       return repository.findByPublishedTrue(pageable);
+       return repository.findByPublishedTrue(pageable).map(mapper::map);
     }
 
     @GetMapping("/posts/{id}")
     @ResponseStatus(HttpStatus.OK)
     // Вывод страницы
-    public Post show(@PathVariable Long id) {
-        return repository.findById(id)
+    public PostDTO show(@PathVariable Long id) {
+        var post = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post with the id =" + id + " not found"));
+
+        return mapper.map(post);
     }
 
     @PutMapping("/posts/{id}")
     @ResponseStatus(HttpStatus.OK)
     // Обновление страницы
-    public Post update(@PathVariable Long id, @Valid @RequestBody Post data) {
+    public PostDTO update(@PathVariable Long id, @Valid @RequestBody Post data) {
         var post = repository.findById(id)
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post with the id = " + id + " not found"));
@@ -98,10 +110,8 @@ public class PostController {
         post.setTitle(data.getTitle());
         post.setContent(data.getContent());
         post.setPublished(data.isPublished());
-        post.setAuthorId(data.getAuthorId());
-        post.setCreatedAt(data.getCreatedAt());
 
-        return repository.save(post);
+        return mapper.map(repository.save(post));
     }
 
     @DeleteMapping("/posts/{id}")

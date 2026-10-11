@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -61,7 +62,7 @@ class UserControllerTest {
 
         Long generatedId = JsonPath.parse(content).read("$.id", Long.class);
 
-        assertThat(repository.findById(generatedId).isPresent()).isTrue();
+        assertThat(repository.findById(generatedId)).isPresent();
     }
 
 
@@ -95,7 +96,7 @@ class UserControllerTest {
         assertThat(context.read("$.email", String.class)).isEqualTo(user.getEmail());
 
         String birthdayStr = context.read("$.birthday", String.class);
-        assertThat(Instant.parse(birthdayStr)).isEqualTo(user.getBirthday());
+        assertThat(LocalDate.parse(birthdayStr)).isEqualTo(user.getBirthday());
     }
 
     @Test

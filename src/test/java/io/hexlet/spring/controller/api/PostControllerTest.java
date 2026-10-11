@@ -116,14 +116,14 @@ class PostControllerTest {
 
         Long generatedId = JsonPath.parse(content).read("$.id", Long.class);
 
-        assertThat(repository.findById(generatedId).isPresent()).isTrue();
+        assertThat(repository.findById(generatedId)).isPresent();
     }
 
 
     @Test
         // Returns status 200 and the updated Post
     void updateTest() throws Exception {
-        var post = repository.save(modelGenerator.makePost(null));;
+        var post = repository.save(modelGenerator.makePost(null));
 
         var newPostData = modelGenerator.makePost(null);
 
