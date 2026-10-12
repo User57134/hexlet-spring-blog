@@ -25,8 +25,6 @@ public class Post {
     @GeneratedValue(strategy = IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Заглавие не должно быть пустым")
-    @Size(min=3, message = "Заглавие должно быть от 3 символов длинной")
     private String title;
 
     private String content;

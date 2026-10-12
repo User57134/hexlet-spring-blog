@@ -1,16 +1,17 @@
 package io.hexlet.spring.controller.api;
 
+import io.hexlet.spring.dto.UserCreateDTO;
 import io.hexlet.spring.dto.UserDTO;
 import io.hexlet.spring.exception.ResourceNotFoundException;
-import io.hexlet.spring.mapper.DtoMapper;
+import io.hexlet.spring.converter.DtoEntityConverter;
 import io.hexlet.spring.model.User;
 import io.hexlet.spring.repository.UserRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
@@ -20,13 +21,13 @@ import java.util.List;
 @RequestMapping("/api")
 public class UserController {
 
-    private final UserRepository repository;
-    private final DtoMapper mapper;
+    private final UserRepository userRepository;
+    private final DtoEntityConverter dtoEntityConverter;
 
     @Autowired
-    public UserController(UserRepository userRepository, DtoMapper dtoMapper) {
-        repository = userRepository;
-        mapper = dtoMapper;
+    public UserController(UserRepository repository, DtoEntityConverter converter) {
+        userRepository = repository;
+        dtoEntityConverter = converter;
     }
 
     @Value("${app.page-size}")
@@ -43,44 +44,38 @@ public class UserController {
             pageSize = maxPageSize;
         }
 
-        var users = repository.findAll();
+        var users = userRepository.findAll();
 
         return users.stream()
                 .sorted(Comparator.comparing(User::getId))
                 .skip((page - 1) * pageSize)
                 .limit(pageSize)
-                .map(mapper::map)
+                .map(dtoEntityConverter::makeDTO)
                 .toList();
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserDTO> create(@RequestBody User user) {
-        var email = user.getEmail();
+    public ResponseEntity<UserDTO> create(@Valid  @RequestBody UserCreateDTO dto) {
+        var user = userRepository.save(dtoEntityConverter.makeEntity(dto));
 
-        if (email != null && !email.isBlank()) {
-            var savedUser = repository.save(user);
-
-            URI location = URI.create("/users/" + savedUser.getId());
-            return ResponseEntity.created(location).body(mapper.map(savedUser));
-        } else {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Email should be not empty");
-        }
+        URI location = URI.create("/users/" + user.getId());
+        return ResponseEntity.created(location).body(dtoEntityConverter.makeDTO(user));
     }
 
     @GetMapping("/users/{id}")
     @ResponseStatus(HttpStatus.OK)
     public UserDTO show(@PathVariable Long id) {
-        var user  = repository.findById(id)
+        var user  = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with the id =" + id + " not found"));
 
-        return mapper.map(user);
+        return dtoEntityConverter.makeDTO(user);
     }
 
     @DeleteMapping("/users/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT) // 204
     public void delete(@PathVariable Long id) {
-        if (repository.existsById(id)) {
-            repository.deleteById(id);
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
         } else {
             throw new ResourceNotFoundException("Usser with id = " + id + " was not found");
         }

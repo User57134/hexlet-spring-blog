@@ -1,6 +1,8 @@
-package io.hexlet.spring.mapper;
+package io.hexlet.spring.converter;
 
+import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.dto.PostDTO;
+import io.hexlet.spring.dto.UserCreateDTO;
 import io.hexlet.spring.dto.UserDTO;
 import io.hexlet.spring.model.Post;
 import io.hexlet.spring.model.User;
@@ -9,9 +11,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Component
-public class DtoMapper {
+public class DtoEntityConverter {
 
-    public PostDTO map(Post post) {
+    public PostDTO makeDTO(Post post) {
         var dto = new PostDTO();
         dto.setId(post.getId());
         dto.setTitle(post.getTitle());
@@ -24,7 +26,7 @@ public class DtoMapper {
         return dto;
     }
 
-    public UserDTO map(User user) {
+    public UserDTO makeDTO(User user) {
         var dto = new UserDTO();
         dto.setId(user.getId());
         dto.setFirstName(user.getFirstName());
@@ -35,5 +37,23 @@ public class DtoMapper {
         dto.setUpdatedAt(LocalDateTime.ofInstant(user.getUpdatedAt(), ZoneId.systemDefault()));
 
         return dto;
+    }
+
+    public User makeEntity(UserCreateDTO dto) {
+        var user = new User();
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        user.setEmail(dto.getEmail());
+        user.setBirthday(dto.getBirthday());
+
+        return user;
+    }
+
+    public Post makeEntity(PostCreateDTO dto) {
+        var post = new Post();
+        post.setTitle(dto.getTitle());
+        post.setContent(dto.getContent());
+
+        return post;
     }
 }

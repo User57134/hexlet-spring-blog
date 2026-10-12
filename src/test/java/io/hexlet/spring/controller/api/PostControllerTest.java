@@ -2,6 +2,7 @@ package io.hexlet.spring.controller.api;
 
 import com.jayway.jsonpath.JsonPath;
 import io.hexlet.spring.data.ModelGenerator;
+import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -99,9 +100,13 @@ class PostControllerTest {
     void createTest() throws Exception {
         var post = modelGenerator.makePost(null);
 
+        var createDTO = new PostCreateDTO();
+        createDTO.setContent(post.getContent());
+        createDTO.setTitle(post.getTitle());
+
         var result = mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(post)))
+                        .content(om.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
 

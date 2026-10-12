@@ -1,8 +1,9 @@
 package io.hexlet.spring.controller.api;
 
+import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.dto.PostDTO;
 import io.hexlet.spring.exception.ResourceNotFoundException;
-import io.hexlet.spring.mapper.DtoMapper;
+import io.hexlet.spring.converter.DtoEntityConverter;
 import io.hexlet.spring.model.Post;
 import io.hexlet.spring.repository.PostRepository;
 import jakarta.validation.Valid;
@@ -22,41 +23,41 @@ import java.util.List;
 @RequestMapping("/api")
 public class PostController {
 
-    private final PostRepository repository;
-    private final DtoMapper mapper;
+    private final PostRepository postRepository;
+    private final DtoEntityConverter dtoEntityConvertor;
 
     @Autowired
-    public PostController(PostRepository postRepository, DtoMapper dtoMapper) {
-        repository = postRepository;
-        mapper = dtoMapper;
+    public PostController(PostRepository repository, DtoEntityConverter converter) {
+        postRepository = repository;
+        dtoEntityConvertor = converter;
     }
 
     // Создание поста
     @PostMapping("/posts")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<PostDTO> create(@Valid @RequestBody Post post) {
-        Post savedPost = repository.save(post);
+    public ResponseEntity<PostDTO> create(@Valid @RequestBody PostCreateDTO dto) {
+        Post post = postRepository.save(dtoEntityConvertor.makeEntity(dto));
 
         // 2. Динамически строим URI созданного ресурса: текущий путь + /{id}
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest() // берет текущий "/posts"
                 .path("/{id}")        // добавляет переменную пути
-                .buildAndExpand(savedPost.getId()) // подставляет id нового поста
+                .buildAndExpand(post.getId()) // подставляет id нового поста
                 .toUri();
 
-        return ResponseEntity.created(location).body(mapper.map(savedPost));
+        return ResponseEntity.created(location).body(dtoEntityConvertor.makeDTO(post));
     }
 
     // Список постов
     @GetMapping("/old/posts")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<List<PostDTO>> index(@RequestParam(defaultValue = "10") Integer limit) {
-        var result = repository.findAll();
+        var result = postRepository.findAll();
 
         return ResponseEntity
                 .ok()
                 .header("X-Total-Count", String.valueOf(result.size()))
-                .body(result.stream().map(mapper::map).toList());
+                .body(result.stream().map(dtoEntityConvertor::makeDTO).toList());
     }
 
     @GetMapping("/posts")
@@ -86,24 +87,24 @@ public class PostController {
             pageable = PageRequest.of(page, size);
         }
 
-       return repository.findByPublishedTrue(pageable).map(mapper::map);
+       return postRepository.findByPublishedTrue(pageable).map(dtoEntityConvertor::makeDTO);
     }
 
     @GetMapping("/posts/{id}")
     @ResponseStatus(HttpStatus.OK)
     // Вывод страницы
     public PostDTO show(@PathVariable Long id) {
-        var post = repository.findById(id)
+        var post = postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post with the id =" + id + " not found"));
 
-        return mapper.map(post);
+        return dtoEntityConvertor.makeDTO(post);
     }
 
     @PutMapping("/posts/{id}")
     @ResponseStatus(HttpStatus.OK)
     // Обновление страницы
     public PostDTO update(@PathVariable Long id, @Valid @RequestBody Post data) {
-        var post = repository.findById(id)
+        var post = postRepository.findById(id)
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post with the id = " + id + " not found"));
 
@@ -111,13 +112,13 @@ public class PostController {
         post.setContent(data.getContent());
         post.setPublished(data.isPublished());
 
-        return mapper.map(repository.save(post));
+        return dtoEntityConvertor.makeDTO(postRepository.save(post));
     }
 
     @DeleteMapping("/posts/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     // Удаление страницы
     public void destroy(@PathVariable Long id) {
-        repository.deleteById(id);
+        postRepository.deleteById(id);
     }
 }
