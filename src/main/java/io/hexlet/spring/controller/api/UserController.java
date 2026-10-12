@@ -1,7 +1,6 @@
 package io.hexlet.spring.controller.api;
 
-import io.hexlet.spring.dto.UserCreateDTO;
-import io.hexlet.spring.dto.UserDTO;
+import io.hexlet.spring.dto.*;
 import io.hexlet.spring.exception.ResourceNotFoundException;
 import io.hexlet.spring.converter.DtoEntityConverter;
 import io.hexlet.spring.model.User;
@@ -12,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
@@ -48,18 +49,33 @@ public class UserController {
 
         return users.stream()
                 .sorted(Comparator.comparing(User::getId))
-                .skip((page - 1) * pageSize)
+                .skip((long) (page - 1) * pageSize)
                 .limit(pageSize)
                 .map(dtoEntityConverter::makeDTO)
                 .toList();
     }
 
     @PostMapping("/users")
-    public ResponseEntity<UserDTO> create(@Valid  @RequestBody UserCreateDTO dto) {
+    public ResponseEntity<UserDTO> create(@Valid @RequestBody UserCreateDTO dto) {
         var user = userRepository.save(dtoEntityConverter.makeEntity(dto));
 
         URI location = URI.create("/users/" + user.getId());
         return ResponseEntity.created(location).body(dtoEntityConverter.makeDTO(user));
+    }
+
+    @PutMapping("/users/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDTO update(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO data) {
+        var user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "User with the id = " + id + " not found"));
+
+        user.setFirstName(data.getFirstName());
+        user.setLastName(data.getLastName());
+        user.setEmail(data.getEmail());
+        user.setBirthday(data.getBirthday());
+
+        return dtoEntityConverter.makeDTO(userRepository.save(user));
     }
 
     @GetMapping("/users/{id}")

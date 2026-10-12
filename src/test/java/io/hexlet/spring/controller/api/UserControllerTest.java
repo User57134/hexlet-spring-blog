@@ -2,6 +2,8 @@ package io.hexlet.spring.controller.api;
 
 import com.jayway.jsonpath.JsonPath;
 import io.hexlet.spring.data.ModelGenerator;
+import io.hexlet.spring.dto.PostUpdateDTO;
+import io.hexlet.spring.dto.UserUpdateDTO;
 import io.hexlet.spring.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -11,10 +13,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
-import java.time.Instant;
 import java.time.LocalDate;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -24,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
 @Transactional         // После прогона каждого теста, база возвращается в исходное состояние
-class UserControllerTest {
+public class UserControllerTest {
 
     @Value("${app.page-size}")
     private int maxPageSize;
@@ -33,10 +36,13 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private UserRepository repository;
+    private UserRepository userRepository;
 
     @Autowired
     private ModelGenerator modelGenerator;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
         // Returns status 201 and Body
@@ -62,9 +68,38 @@ class UserControllerTest {
 
         Long generatedId = JsonPath.parse(content).read("$.id", Long.class);
 
-        assertThat(repository.findById(generatedId)).isPresent();
+        assertThat(userRepository.findById(generatedId)).isPresent();
     }
 
+    @Test
+        // Returns status 200 and the updated User
+    void updateTest() throws Exception {
+        var user = userRepository.save(modelGenerator.makeUser());
+
+        var dataForUpdate = modelGenerator.makeUser();
+
+        var userUpdateDTO = new UserUpdateDTO();
+        userUpdateDTO.setFirstName(dataForUpdate.getFirstName());
+        userUpdateDTO.setLastName(dataForUpdate.getLastName());
+        userUpdateDTO.setEmail(dataForUpdate.getEmail());
+        userUpdateDTO.setBirthday(dataForUpdate.getBirthday());
+
+        var content = mockMvc.perform(put("/api/users/{id}", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userUpdateDTO)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThatJson(content).and(
+                jsonAssert -> jsonAssert.node("id").isEqualTo(user.getId()),
+                jsonAssert -> jsonAssert.node("firstName").isEqualTo(dataForUpdate.getFirstName()),
+                jsonAssert -> jsonAssert.node("lastName").isEqualTo(dataForUpdate.getLastName()),
+                jsonAssert -> jsonAssert.node("email").isEqualTo(dataForUpdate.getEmail()),
+                jsonAssert -> jsonAssert.node("birthday").isEqualTo(dataForUpdate.getBirthday())
+        );
+    }
 
     @Test
         // Returns 200 and List<User>
@@ -80,7 +115,7 @@ class UserControllerTest {
     @Test
         // Returns 200 and User
     void showTest() throws Exception {
-        var user = repository.save(modelGenerator.makeUser());
+        var user = userRepository.save(modelGenerator.makeUser());
 
         var content = mockMvc.perform(get("/api/users/{id}", user.getId()))
                 .andExpect(status().isOk())
@@ -102,7 +137,7 @@ class UserControllerTest {
     @Test
         // Returns status 204
     void deleteTest() throws Exception {
-        var user = repository.save(modelGenerator.makeUser());
+        var user = userRepository.save(modelGenerator.makeUser());
 
         mockMvc.perform(delete("/api/users/{id}", user.getId()))
                 .andExpect(status().isNoContent());

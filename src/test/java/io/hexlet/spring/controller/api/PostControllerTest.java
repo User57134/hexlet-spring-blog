@@ -3,6 +3,7 @@ package io.hexlet.spring.controller.api;
 import com.jayway.jsonpath.JsonPath;
 import io.hexlet.spring.data.ModelGenerator;
 import io.hexlet.spring.dto.PostCreateDTO;
+import io.hexlet.spring.dto.PostUpdateDTO;
 import io.hexlet.spring.repository.PostRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -14,32 +15,36 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
-
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @SpringBootTest
 @AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
 @Transactional         // После прогона каждого теста, база возвращается в исходное состояние
-class PostControllerTest {
+public class PostControllerTest {
 
     @Value("${app.page-size}")
     private int maxPageSize;
 
-    @Autowired
-    private MockMvc mockMvc;
+    private final MockMvc mockMvc;
+    private final PostRepository postRepository;
+    private final ModelGenerator modelGenerator;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    private PostRepository repository;
+    public PostControllerTest(MockMvc mock,
+                              PostRepository repository,
+                              ModelGenerator generator,
+                              ObjectMapper mapper) {
 
-    @Autowired
-    private ModelGenerator modelGenerator;
-
-    @Autowired
-    private ObjectMapper om;
+        mockMvc = mock;
+        postRepository = repository;
+        modelGenerator = generator;
+        objectMapper = mapper;
+    }
 
     @Test
     // Returns status 200 and a page of posts
@@ -47,7 +52,7 @@ class PostControllerTest {
         for (int i = 0; i < maxPageSize; i++) {
             var post = modelGenerator.makePost(null);
             post.setPublished(true);
-            repository.save(post);
+            postRepository.save(post);
         }
 
         var result = mockMvc.perform(get("/api/posts")
@@ -78,7 +83,7 @@ class PostControllerTest {
     @Test
         // Returns status 200 and an array of posts
     void showTest() throws Exception {
-        var post = repository.save(modelGenerator.makePost(null));
+        var post = postRepository.save(modelGenerator.makePost(null));
 
         var content = mockMvc.perform(get("/api/posts/{id}", post.getId()))
                 .andExpect(status().isOk())
@@ -101,12 +106,12 @@ class PostControllerTest {
         var post = modelGenerator.makePost(null);
 
         var createDTO = new PostCreateDTO();
-        createDTO.setContent(post.getContent());
         createDTO.setTitle(post.getTitle());
+        createDTO.setContent(post.getContent());
 
         var result = mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(createDTO)))
+                        .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -116,25 +121,30 @@ class PostControllerTest {
                 jsonAssert -> jsonAssert.node("id").isPresent(),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(post.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(post.isPublished())
+                jsonAssert -> jsonAssert.node("published").isEqualTo(false)
         );
 
         Long generatedId = JsonPath.parse(content).read("$.id", Long.class);
 
-        assertThat(repository.findById(generatedId)).isPresent();
+        assertThat(postRepository.findById(generatedId)).isPresent();
     }
 
 
     @Test
         // Returns status 200 and the updated Post
     void updateTest() throws Exception {
-        var post = repository.save(modelGenerator.makePost(null));
+        var post = postRepository.save(modelGenerator.makePost(null));
 
-        var newPostData = modelGenerator.makePost(null);
+        var postForUpdate = modelGenerator.makePost(null);
+
+        var postUpdateDTO = new PostUpdateDTO();
+        postUpdateDTO.setTitle(postForUpdate.getTitle());
+        postUpdateDTO.setContent(postForUpdate.getContent());
+        postUpdateDTO.setPublished(true);
 
         var content = mockMvc.perform(put("/api/posts/{id}", post.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(newPostData)))
+                        .content(objectMapper.writeValueAsString(postUpdateDTO)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -142,9 +152,9 @@ class PostControllerTest {
 
         assertThatJson(content).and(
                 jsonAssert -> jsonAssert.node("id").isEqualTo(post.getId()),
-                jsonAssert -> jsonAssert.node("title").isEqualTo(newPostData.getTitle()),
-                jsonAssert -> jsonAssert.node("content").isEqualTo(newPostData.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(newPostData.isPublished())
+                jsonAssert -> jsonAssert.node("title").isEqualTo(postUpdateDTO.getTitle()),
+                jsonAssert -> jsonAssert.node("content").isEqualTo(postUpdateDTO.getContent()),
+                jsonAssert -> jsonAssert.node("published").isEqualTo(postUpdateDTO.isPublished())
         );
     }
 
@@ -152,7 +162,7 @@ class PostControllerTest {
     @Test
         // Returns status 204
     void deleteTest() throws Exception {
-        var post = repository.save(modelGenerator.makePost(null));
+        var post = postRepository.save(modelGenerator.makePost(null));
 
         mockMvc.perform(delete("/api/posts/{id}", post.getId()))
                 .andExpect(status().isNoContent());
