@@ -45,10 +45,19 @@ dependencies {
     // Добавляет валидацию для сущностей: @NotBlank, @Size, @Valid
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    implementation("org.springframework.boot:spring-boot-devtools")
+
     // Библиотека для генерации случайных данных
     implementation("net.datafaker:datafaker:2.7.0")
 
-    implementation("org.springframework.boot:spring-boot-devtools")
+    // Библиотека для конвертации в DTO и из DTO
+    implementation("org.mapstruct:mapstruct:1.6.3")
+
+    // Процессор аннотаций для MapStruct
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+
+    // Процессор аннотаций при тестировании для MapStruct
+    testAnnotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 
     // Основной набор для тестирования приложений Spring: JUnit, AssertJ, Mockito, модули работы с JSON
     testImplementation("org.springframework.boot:spring-boot-starter-test")

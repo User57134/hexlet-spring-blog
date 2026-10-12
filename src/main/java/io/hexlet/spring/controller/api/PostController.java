@@ -4,7 +4,7 @@ import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.dto.PostDTO;
 import io.hexlet.spring.dto.PostUpdateDTO;
 import io.hexlet.spring.exception.ResourceNotFoundException;
-import io.hexlet.spring.converter.DtoEntityConverter;
+import io.hexlet.spring.mapper.PostMapper;
 import io.hexlet.spring.model.Post;
 import io.hexlet.spring.repository.PostRepository;
 import jakarta.validation.Valid;
@@ -25,18 +25,18 @@ import java.util.List;
 public class PostController {
 
     private final PostRepository postRepository;
-    private final DtoEntityConverter dtoEntityConverter;
+    private final PostMapper postMapper;
 
     @Autowired
-    public PostController(PostRepository repository, DtoEntityConverter converter) {
+    public PostController(PostRepository repository, PostMapper mapper) {
         postRepository = repository;
-        dtoEntityConverter = converter;
+        postMapper = mapper;
     }
 
     @PostMapping("/posts")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<PostDTO> create(@Valid @RequestBody PostCreateDTO dto) {
-        Post post = postRepository.save(dtoEntityConverter.makeEntity(dto));
+        Post post = postRepository.save(postMapper.makeEntity(dto));
 
         // 2. Динамически строим URI созданного ресурса: текущий путь + /{id}
         URI location = ServletUriComponentsBuilder
@@ -45,7 +45,7 @@ public class PostController {
                 .buildAndExpand(post.getId()) // подставляет id нового поста
                 .toUri();
 
-        return ResponseEntity.created(location).body(dtoEntityConverter.makeDTO(post));
+        return ResponseEntity.created(location).body(postMapper.makeDTO(post));
     }
 
     @GetMapping("/old/posts")
@@ -56,7 +56,7 @@ public class PostController {
         return ResponseEntity
                 .ok()
                 .header("X-Total-Count", String.valueOf(result.size()))
-                .body(result.stream().map(dtoEntityConverter::makeDTO).toList());
+                .body(result.stream().map(postMapper::makeDTO).toList());
     }
 
     @GetMapping("/posts")
@@ -86,7 +86,7 @@ public class PostController {
             pageable = PageRequest.of(page, size);
         }
 
-       return postRepository.findByPublishedTrue(pageable).map(dtoEntityConverter::makeDTO);
+       return postRepository.findByPublishedTrue(pageable).map(postMapper::makeDTO);
     }
 
     @GetMapping("/posts/{id}")
@@ -95,7 +95,7 @@ public class PostController {
         var post = postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post with the id =" + id + " not found"));
 
-        return dtoEntityConverter.makeDTO(post);
+        return postMapper.makeDTO(post);
     }
 
     @PutMapping("/posts/{id}")
@@ -105,12 +105,9 @@ public class PostController {
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post with the id = " + id + " not found"));
 
-        post.setTitle(data.getTitle());
-        post.setContent(data.getContent());
-        post.setPublished(data.isPublished());
-        post.setAuthorId(data.getAuthorId());
+        postMapper.updateEntity(post, data);
 
-        return dtoEntityConverter.makeDTO(postRepository.save(post));
+        return postMapper.makeDTO(postRepository.save(post));
     }
 
     @DeleteMapping("/posts/{id}")

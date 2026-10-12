@@ -2,7 +2,7 @@ package io.hexlet.spring.controller.api;
 
 import io.hexlet.spring.dto.*;
 import io.hexlet.spring.exception.ResourceNotFoundException;
-import io.hexlet.spring.converter.DtoEntityConverter;
+import io.hexlet.spring.mapper.UserMapper;
 import io.hexlet.spring.model.User;
 import io.hexlet.spring.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -23,12 +23,12 @@ import java.util.List;
 public class UserController {
 
     private final UserRepository userRepository;
-    private final DtoEntityConverter dtoEntityConverter;
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserController(UserRepository repository, DtoEntityConverter converter) {
+    public UserController(UserRepository repository, UserMapper mapper) {
         userRepository = repository;
-        dtoEntityConverter = converter;
+        userMapper = mapper;
     }
 
     @Value("${app.page-size}")
@@ -51,16 +51,16 @@ public class UserController {
                 .sorted(Comparator.comparing(User::getId))
                 .skip((long) (page - 1) * pageSize)
                 .limit(pageSize)
-                .map(dtoEntityConverter::makeDTO)
+                .map(userMapper::makeDTO)
                 .toList();
     }
 
     @PostMapping("/users")
     public ResponseEntity<UserDTO> create(@Valid @RequestBody UserCreateDTO dto) {
-        var user = userRepository.save(dtoEntityConverter.makeEntity(dto));
+        var user = userRepository.save(userMapper.makeEntity(dto));
 
         URI location = URI.create("/users/" + user.getId());
-        return ResponseEntity.created(location).body(dtoEntityConverter.makeDTO(user));
+        return ResponseEntity.created(location).body(userMapper.makeDTO(user));
     }
 
     @PutMapping("/users/{id}")
@@ -70,12 +70,9 @@ public class UserController {
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "User with the id = " + id + " not found"));
 
-        user.setFirstName(data.getFirstName());
-        user.setLastName(data.getLastName());
-        user.setEmail(data.getEmail());
-        user.setBirthday(data.getBirthday());
+        userMapper.updateEntity(user, data);
 
-        return dtoEntityConverter.makeDTO(userRepository.save(user));
+        return userMapper.makeDTO(userRepository.save(user));
     }
 
     @GetMapping("/users/{id}")
@@ -84,7 +81,7 @@ public class UserController {
         var user  = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User with the id =" + id + " not found"));
 
-        return dtoEntityConverter.makeDTO(user);
+        return userMapper.makeDTO(user);
     }
 
     @DeleteMapping("/users/{id}")
