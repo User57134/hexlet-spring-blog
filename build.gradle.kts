@@ -37,6 +37,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
 
+    // Подключение механизма для валидации:
+    // 1) интерфейсы спецификации: jakarta.validation-api;
+    // 2) Реализацию (движок): hibernate-validator;
+    // 3) Интеграцию со Spring: автоматическую настройку локального валидатора
+    //    (LocalValidatorFactoryBean), который связывает движок валидации
+    //    со Spring MVC.
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // Поддержка jakarta.persistence.*

@@ -23,14 +23,22 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 public class Post {
     @Id
     @GeneratedValue(strategy = IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
+    @NotBlank(message = "Заглавие не должно быть пустым")
+    @Size(min=3, max=100, message = "Заглавие должно быть от 3 до 100 символов длинной")
+    @Column(length = 100, nullable = false)
     private String title;
 
+    @NotBlank(message = "Содержание не должно быть пустым")
+    @Size(min=10, message = "Содержание должно быть от 10 символов длинной")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     private Long authorId;
 
+    @Column(nullable = false)
     private boolean published;
 
     @CreatedDate

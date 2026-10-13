@@ -155,7 +155,7 @@ public class PostControllerTest {
                 jsonAssert -> jsonAssert.node("id").isEqualTo(post.getId()),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(postUpdateDTO.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(postUpdateDTO.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(postUpdateDTO.isPublished())
+                jsonAssert -> jsonAssert.node("published").isEqualTo(postUpdateDTO.getPublished())
         );
     }
 
