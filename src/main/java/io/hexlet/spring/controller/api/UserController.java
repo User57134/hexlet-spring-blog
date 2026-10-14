@@ -19,11 +19,14 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+
+    @Value("${app.page-size}")
+    private int maxPageSize;
 
     @Autowired
     public UserController(UserRepository repository, UserMapper mapper) {
@@ -31,10 +34,8 @@ public class UserController {
         userMapper = mapper;
     }
 
-    @Value("${app.page-size}")
-    private int maxPageSize;
 
-    @GetMapping("/users")
+    @GetMapping(path = "")
     @ResponseStatus(HttpStatus.OK) // 200
     public List<UserDTO> index(
             @RequestParam(defaultValue = "1") int page,
@@ -55,7 +56,8 @@ public class UserController {
                 .toList();
     }
 
-    @PostMapping("/users")
+
+    @PostMapping(path = "")
     public ResponseEntity<UserDTO> create(@Valid @RequestBody UserCreateDTO dto) {
         var user = userRepository.save(userMapper.makeEntity(dto));
 
@@ -63,7 +65,8 @@ public class UserController {
         return ResponseEntity.created(location).body(userMapper.makeDTO(user));
     }
 
-    @PutMapping("/users/{id}")
+
+    @PutMapping(path = "/{id}")
     @ResponseStatus(HttpStatus.OK)
     public UserDTO update(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO data) {
         var user = userRepository.findById(id)
@@ -75,7 +78,23 @@ public class UserController {
         return userMapper.makeDTO(userRepository.save(user));
     }
 
-    @GetMapping("/users/{id}")
+
+    @PatchMapping(path = "/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDTO patch(@PathVariable Long id, @RequestBody UserPatchDTO dto) {
+        var user = userRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("User with the id =" + id + " not found"));
+
+        dto.getFirstName().ifPresent(user::setFirstName);
+        dto.getLastName().ifPresent(user::setLastName);
+        dto.getEmail().ifPresent(user::setEmail);
+        dto.getBirthday().ifPresent(user::setBirthday);
+
+        return userMapper.makeDTO(userRepository.save(user));
+    }
+
+
+    @GetMapping(path = "/{id}")
     @ResponseStatus(HttpStatus.OK)
     public UserDTO show(@PathVariable Long id) {
         var user  = userRepository.findById(id)
@@ -84,7 +103,8 @@ public class UserController {
         return userMapper.makeDTO(user);
     }
 
-    @DeleteMapping("/users/{id}")
+
+    @DeleteMapping(path = "/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT) // 204
     public void delete(@PathVariable Long id) {
         if (userRepository.existsById(id)) {

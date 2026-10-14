@@ -10,9 +10,8 @@ spring:
       enabled: true                             # Включение web-консоли H2
 
   jpa:
-    hibernate:
-      ddl-auto: update                          #  обновление таблиц при изменении сущностей
     show-sql: true                              # вывод SQL-запросов
+    generate-ddl: true                          # разрешить Spring генерировать таблицы на основе сущностей
 
   output:
     ansi:

@@ -14,6 +14,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
@@ -40,12 +42,26 @@ public class User {
     private String lastName;
 
     @NotBlank(message = "Почта не должна быть пустой")
-    @Column(nullable = false)
     @Email
+    @Column(nullable = false)
     private String email;
 
     @Past
     private LocalDate birthday;
+
+    @OneToMany(
+            mappedBy = "author",        // сопоставляется по полю 'author';
+
+            cascade = CascadeType.ALL,  // все изменения над главной сущностью (пользователем) транслируются
+                                        // на зависимые сущности (посты);
+
+            orphanRemoval = true,       // как только пост отвязывается от пользователя (становится сиротой),
+                                        // то удаляется из хранилища постов;
+
+            fetch = FetchType.LAZY      // ленивая загрузка постов - при запросе пользователя, посты не подгружаются
+                                        // сразу, а только при запросе user.getPosts();
+    )
+    private List<Post> posts = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

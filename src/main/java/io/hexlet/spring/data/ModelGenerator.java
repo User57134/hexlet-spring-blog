@@ -45,10 +45,7 @@ public class ModelGenerator {
         post.setTitle(faker.book().title());
         post.setContent(faker.lorem().maxLengthSentence(255));
         post.setPublished(faker.bool().bool());
-
-        if (user != null) {
-            post.setAuthorId(user.getId());
-        }
+        post.setAuthor(user);
 
         return post;
     }

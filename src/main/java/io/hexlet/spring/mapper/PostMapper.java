@@ -13,7 +13,7 @@ import org.mapstruct.*;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PostMapper {
-
+    @Mapping(target = "userId", source = "author.id")
     PostDTO makeDTO(Post post);
 
     Post makeEntity(PostCreateDTO dto);

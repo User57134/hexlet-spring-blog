@@ -36,7 +36,13 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    private Long authorId;
+    @ManyToOne(
+            fetch = FetchType.LAZY  // ленивая загрузка пользователя - при запросе из базы подгружаются только данные
+                                    // поста, данные об авторе подгружаются если сделать непосредственный запрос:
+                                    // post.getAuthor();
+    )
+    @JoinColumn(name = "user_id")
+    private User author;
 
     @Column(nullable = false)
     private boolean published;

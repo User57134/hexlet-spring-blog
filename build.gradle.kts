@@ -51,6 +51,11 @@ dependencies {
     // Добавляет валидацию для сущностей: @NotBlank, @Size, @Valid
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
+    // Подключение библиотеки jackson-databind-nullable: для обертывания полей JsonNullable
+    // для разделения случаев при частичном обновлении когда поле отсутствует и
+    // когда оно умышленно обнулено
+    implementation("org.openapitools:jackson-databind-nullable:0.2.11")
+
     implementation("org.springframework.boot:spring-boot-devtools")
 
     // Библиотека для генерации случайных данных

@@ -5,6 +5,7 @@ import io.hexlet.spring.data.ModelGenerator;
 import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.dto.PostUpdateDTO;
 import io.hexlet.spring.repository.PostRepository;
+import io.hexlet.spring.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +33,20 @@ public class PostControllerTest {
 
     private final MockMvc mockMvc;
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
     private final ModelGenerator modelGenerator;
     private final ObjectMapper objectMapper;
 
     @Autowired
     public PostControllerTest(MockMvc mock,
-                              PostRepository repository,
+                              PostRepository repositoryOfPosts,
+                              UserRepository repositoryOfUsers,
                               ModelGenerator generator,
                               ObjectMapper mapper) {
 
         mockMvc = mock;
-        postRepository = repository;
+        postRepository = repositoryOfPosts;
+        userRepository = repositoryOfUsers;
         modelGenerator = generator;
         objectMapper = mapper;
     }
@@ -72,7 +76,7 @@ public class PostControllerTest {
     void indexTest() throws Exception {
         modelGenerator.generateData(maxPageSize);
 
-        var result = mockMvc.perform(get("/api/old/posts"))
+        var result = mockMvc.perform(get("/api/posts/old"))
                 .andExpect(status().isOk()).andReturn();
 
         var content = result.getResponse().getContentAsString();
@@ -104,11 +108,13 @@ public class PostControllerTest {
     @Test
         // Returns status 201 and the Post
     void createTest() throws Exception {
-        var post = modelGenerator.makePost(null);
+        var user = userRepository.save(modelGenerator.makeUser());
+        var post = modelGenerator.makePost(user);
 
         var createDTO = new PostCreateDTO();
         createDTO.setTitle(post.getTitle());
         createDTO.setContent(post.getContent());
+        createDTO.setUserId(post.getAuthor().getId());
 
         var result = mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -155,7 +161,7 @@ public class PostControllerTest {
                 jsonAssert -> jsonAssert.node("id").isEqualTo(post.getId()),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(postUpdateDTO.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(postUpdateDTO.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(postUpdateDTO.getPublished())
+                jsonAssert -> jsonAssert.node("published").isEqualTo(postUpdateDTO.isPublished())
         );
     }
 
