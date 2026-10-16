@@ -42,6 +42,7 @@ public class ModelGenerator {
 
     public Post makePost(User user) {
         var post = new Post();
+        post.setSlug(faker.internet().slug());
         post.setTitle(faker.book().title());
         post.setContent(faker.lorem().maxLengthSentence(255));
         post.setPublished(faker.bool().bool());

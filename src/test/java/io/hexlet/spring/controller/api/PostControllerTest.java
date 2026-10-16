@@ -3,11 +3,13 @@ package io.hexlet.spring.controller.api;
 import com.jayway.jsonpath.JsonPath;
 import io.hexlet.spring.data.ModelGenerator;
 import io.hexlet.spring.dto.PostCreateDTO;
+import io.hexlet.spring.dto.PostPatchDTO;
 import io.hexlet.spring.dto.PostUpdateDTO;
 import io.hexlet.spring.repository.PostRepository;
 import io.hexlet.spring.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -55,7 +57,8 @@ public class PostControllerTest {
     // Returns status 200 and a page of posts
     void indexOfPublishedTest() throws Exception {
         for (int i = 0; i < maxPageSize; i++) {
-            var post = modelGenerator.makePost(null);
+            var user = modelGenerator.makeUser();
+            var post = modelGenerator.makePost(user);
             post.setPublished(true);
             postRepository.save(post);
         }
@@ -88,7 +91,9 @@ public class PostControllerTest {
     @Test
         // Returns status 200 and an array of posts
     void showTest() throws Exception {
-        var post = postRepository.save(modelGenerator.makePost(null));
+        var user = modelGenerator.makeUser();
+        var tetsPost = modelGenerator.makePost(user);
+        var post = postRepository.save(tetsPost);
 
         var content = mockMvc.perform(get("/api/posts/{id}", post.getId()))
                 .andExpect(status().isOk())
@@ -98,6 +103,7 @@ public class PostControllerTest {
 
         assertThatJson(content).and(
                 jsonAssert -> jsonAssert.node("id").isEqualTo(post.getId()),
+                jsonAssert -> jsonAssert.node("slug").isEqualTo(post.getSlug()),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(post.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
                 jsonAssert -> jsonAssert.node("published").isEqualTo(post.isPublished())
@@ -108,17 +114,18 @@ public class PostControllerTest {
     @Test
         // Returns status 201 and the Post
     void createTest() throws Exception {
-        var user = userRepository.save(modelGenerator.makeUser());
+        var user = userRepository.save(modelGenerator.makeUser());;
         var post = modelGenerator.makePost(user);
 
-        var createDTO = new PostCreateDTO();
-        createDTO.setTitle(post.getTitle());
-        createDTO.setContent(post.getContent());
-        createDTO.setUserId(post.getAuthor().getId());
+        var postCreateDto = new PostCreateDTO();
+        postCreateDto.setSlug(post.getSlug());
+        postCreateDto.setTitle(post.getTitle());
+        postCreateDto.setContent(post.getContent());
+        postCreateDto.setAuthorId(post.getAuthor().getId());
 
         var result = mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createDTO)))
+                        .content(objectMapper.writeValueAsString(postCreateDto)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -126,6 +133,7 @@ public class PostControllerTest {
 
         assertThatJson(content).and(
                 jsonAssert -> jsonAssert.node("id").isPresent(),
+                jsonAssert -> jsonAssert.node("slug").isEqualTo(post.getSlug()),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(post.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
                 jsonAssert -> jsonAssert.node("published").isEqualTo(false)
@@ -140,14 +148,19 @@ public class PostControllerTest {
     @Test
         // Returns status 200 and the updated Post
     void updateTest() throws Exception {
-        var post = postRepository.save(modelGenerator.makePost(null));
+        var user = modelGenerator.makeUser();
+        var post = modelGenerator.makePost(user);
+        postRepository.save(post);
 
-        var postForUpdate = modelGenerator.makePost(null);
+        var userForUpdate = userRepository.save(modelGenerator.makeUser());
+        var postForUpdate = modelGenerator.makePost(userForUpdate);
 
         var postUpdateDTO = new PostUpdateDTO();
+        postUpdateDTO.setSlug(postForUpdate.getSlug());
         postUpdateDTO.setTitle(postForUpdate.getTitle());
         postUpdateDTO.setContent(postForUpdate.getContent());
-        postUpdateDTO.setPublished(true);
+        postUpdateDTO.setPublished(postForUpdate.isPublished());
+        postUpdateDTO.setAuthorId(postForUpdate.getAuthor().getId());
 
         var content = mockMvc.perform(put("/api/posts/{id}", post.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -159,10 +172,49 @@ public class PostControllerTest {
 
         assertThatJson(content).and(
                 jsonAssert -> jsonAssert.node("id").isEqualTo(post.getId()),
-                jsonAssert -> jsonAssert.node("title").isEqualTo(postUpdateDTO.getTitle()),
-                jsonAssert -> jsonAssert.node("content").isEqualTo(postUpdateDTO.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(postUpdateDTO.isPublished())
+                jsonAssert -> jsonAssert.node("slug").isEqualTo(postForUpdate.getSlug()),
+                jsonAssert -> jsonAssert.node("title").isEqualTo(postForUpdate.getTitle()),
+                jsonAssert -> jsonAssert.node("content").isEqualTo(postForUpdate.getContent()),
+                jsonAssert -> jsonAssert.node("published").isEqualTo(postForUpdate.isPublished()),
+                jsonAssert -> jsonAssert.node("authorId").isEqualTo(postForUpdate.getAuthor().getId())
         );
+
+        var resavedPost = postRepository.findById(post.getId());
+        assertThat(resavedPost).isPresent();
+        assertThat(resavedPost.get().getTitle()).isEqualTo(postForUpdate.getTitle());
+    }
+
+
+    @Test
+        // Returns status 200 and the updated Post
+    void partialUpdateTest() throws Exception {
+        var user = modelGenerator.makeUser();
+        var post = modelGenerator.makePost(user);
+        postRepository.save(post);
+
+        var postPatchDTO = new PostPatchDTO();
+        postPatchDTO.setTitle(JsonNullable.of("NewTitle"));
+
+        var content = mockMvc.perform(patch("/api/posts/{id}", post.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postPatchDTO)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThatJson(content).and(
+                jsonAssert -> jsonAssert.node("id").isEqualTo(post.getId()),
+                jsonAssert -> jsonAssert.node("slug").isEqualTo(post.getSlug()),
+                jsonAssert -> jsonAssert.node("title").isEqualTo("NewTitle"),
+                jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
+                jsonAssert -> jsonAssert.node("published").isEqualTo(post.isPublished()),
+                jsonAssert -> jsonAssert.node("authorId").isEqualTo(post.getAuthor().getId())
+        );
+
+        var resavedPost = postRepository.findById(post.getId());
+        assertThat(resavedPost).isPresent();
+        assertThat(resavedPost.get().getTitle()).isEqualTo("NewTitle");
     }
 
 

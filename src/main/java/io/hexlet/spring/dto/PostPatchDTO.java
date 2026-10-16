@@ -1,5 +1,7 @@
 package io.hexlet.spring.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +12,8 @@ import org.openapitools.jackson.nullable.JsonNullable;
 @Setter
 @Getter
 public class PostPatchDTO {
+    private JsonNullable<String> slug = JsonNullable.undefined();
+
     @Size(min=3, max=100, message = "Заглавие должно быть от 3 до 100 символов длинной")
     private JsonNullable<String> title = JsonNullable.undefined();
 
@@ -17,4 +21,7 @@ public class PostPatchDTO {
     private JsonNullable<String> content = JsonNullable.undefined();
 
     private JsonNullable<Boolean> published = JsonNullable.undefined();
+
+    @Positive(message = "ID пользователя - положительное число")
+    private JsonNullable<Long> authorId = JsonNullable.undefined();
 }

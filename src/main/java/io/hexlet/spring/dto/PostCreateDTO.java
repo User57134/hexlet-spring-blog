@@ -12,6 +12,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PostCreateDTO {
+    @NotNull
+    private String slug;
+
     @NotBlank(message = "Заглавие не должно быть пустым")
     @Size(min=3, max=100, message = "Заглавие должно быть от 3 до 100 символов длинной")
     private String title;
@@ -22,5 +25,5 @@ public class PostCreateDTO {
 
     @NotNull(message = "ID пользователя обязателен для заполнения")
     @Positive(message = "ID пользователя - положительное число")
-    private Long userId;
+    private Long authorId;
 }

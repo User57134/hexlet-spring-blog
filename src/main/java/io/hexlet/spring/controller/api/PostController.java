@@ -24,17 +24,14 @@ import java.util.List;
 public class PostController {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
     private final PostMapper postMapper;
 
     @Autowired
     public PostController(PostRepository repositoryOfPosts,
-                          PostMapper mapper,
-                          UserRepository repositoryOfUsers) {
+                          PostMapper mapper) {
 
         postRepository = repositoryOfPosts;
         postMapper = mapper;
-        userRepository = repositoryOfUsers;
     }
 
 
@@ -94,15 +91,7 @@ public class PostController {
     @PostMapping(path = "")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<PostDTO> create(@Valid @RequestBody PostCreateDTO dto) {
-        var user = userRepository.findById(dto.getUserId())
-                .orElseThrow(()
-                        -> new ResourceNotFoundException("User with the id =" + dto.getUserId() + " not found"));
-
-
-        var entity = postMapper.makeEntity(dto);
-        entity.setAuthor(user);
-
-        var post = postRepository.save(entity);
+        var post = postRepository.save(postMapper.makeEntity(dto));
 
         // 2. Динамически строим URI созданного ресурса: текущий путь + /{id}
         URI location = ServletUriComponentsBuilder
@@ -122,7 +111,7 @@ public class PostController {
                 .orElseThrow(() ->
                         new ResponseStatusException(HttpStatus.NOT_FOUND, "Post with the id = " + id + " not found"));
 
-        postMapper.updateEntity(post, data);
+        postMapper.updateEntity(data, post);
 
         return postMapper.makeDTO(postRepository.save(post));
     }
