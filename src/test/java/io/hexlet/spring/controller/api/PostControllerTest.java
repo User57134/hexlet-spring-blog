@@ -1,10 +1,13 @@
 package io.hexlet.spring.controller.api;
 
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.TypeRef;
 import io.hexlet.spring.data.ModelGenerator;
 import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.dto.PostPatchDTO;
 import io.hexlet.spring.dto.PostUpdateDTO;
+import io.hexlet.spring.dto.TagCreateDTO;
+import io.hexlet.spring.model.Tag;
 import io.hexlet.spring.repository.PostRepository;
 import io.hexlet.spring.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -19,8 +22,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 
+import java.util.HashSet;
+import java.util.List;
+
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,6 +64,8 @@ public class PostControllerTest {
     void indexOfPublishedTest() throws Exception {
         for (int i = 0; i < maxPageSize; i++) {
             var user = modelGenerator.makeUser();
+            userRepository.save(user);
+
             var post = modelGenerator.makePost(user);
             post.setPublished(true);
             postRepository.save(post);
@@ -65,7 +73,7 @@ public class PostControllerTest {
 
         var result = mockMvc.perform(get("/api/posts")
                         .param("page", "0")
-                        .param("size", "5"))
+                        .param("size", String.valueOf(maxPageSize)))
                 .andExpect(status().isOk()).andReturn();
 
         var content = result.getResponse().getContentAsString();
@@ -84,15 +92,29 @@ public class PostControllerTest {
 
         var content = result.getResponse().getContentAsString();
 
-        assertThatJson(content).isArray().hasSize(maxPageSize);
+        assertThatJson(content).and(
+                // Проверяем, что сам корневой JSON является массивом и имеет размер maxPageSize
+                jsonAssert -> jsonAssert.isArray().hasSize(maxPageSize)
+        );
+
+        @SuppressWarnings("unchecked")
+        List<String> allTagNames = JsonPath.parse(content).read("$.[*].tags[*].name", List.class);
+
+        // 3. Через стандартный AssertJ проверяем, что общее количество связей Many-to-Many равно 2 * maxPageSize
+        assertThat(allTagNames)
+                .isNotNull()
+                .hasSize(2 * maxPageSize);
     }
 
 
     @Test
         // Returns status 200 and an array of posts
     void showTest() throws Exception {
-        var user = modelGenerator.makeUser();
+        var user = userRepository.save(modelGenerator.makeUser());
         var tetsPost = modelGenerator.makePost(user);
+        modelGenerator.makeTag(tetsPost);
+        modelGenerator.makeTag(tetsPost);
+
         var post = postRepository.save(tetsPost);
 
         var content = mockMvc.perform(get("/api/posts/{id}", post.getId()))
@@ -106,7 +128,8 @@ public class PostControllerTest {
                 jsonAssert -> jsonAssert.node("slug").isEqualTo(post.getSlug()),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(post.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(post.isPublished())
+                jsonAssert -> jsonAssert.node("published").isEqualTo(post.isPublished()),
+                jsonAssert -> jsonAssert.node("tags").isArray().hasSize(post.getTags().size())
         );
     }
 
@@ -114,7 +137,7 @@ public class PostControllerTest {
     @Test
         // Returns status 201 and the Post
     void createTest() throws Exception {
-        var user = userRepository.save(modelGenerator.makeUser());;
+        var user = userRepository.save(modelGenerator.makeUser());
         var post = modelGenerator.makePost(user);
 
         var postCreateDto = new PostCreateDTO();
@@ -122,6 +145,15 @@ public class PostControllerTest {
         postCreateDto.setTitle(post.getTitle());
         postCreateDto.setContent(post.getContent());
         postCreateDto.setAuthorId(post.getAuthor().getId());
+
+        var tags = new HashSet<TagCreateDTO>();
+        for (int i = 0; i < 4; i += 1) {
+            var dto = new TagCreateDTO();
+            dto.setName("test_tag_" + i);
+            tags.add(dto);
+        }
+
+        postCreateDto.setTags(tags);
 
         var result = mockMvc.perform(post("/api/posts")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -136,19 +168,27 @@ public class PostControllerTest {
                 jsonAssert -> jsonAssert.node("slug").isEqualTo(post.getSlug()),
                 jsonAssert -> jsonAssert.node("title").isEqualTo(post.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
-                jsonAssert -> jsonAssert.node("published").isEqualTo(false)
+                jsonAssert -> jsonAssert.node("published").isEqualTo(false),
+                jsonAssert -> jsonAssert.node("tags").isArray().hasSize(tags.size())
         );
 
         Long generatedId = JsonPath.parse(content).read("$.id", Long.class);
 
-        assertThat(postRepository.findById(generatedId)).isPresent();
+        var savedPostOptional = postRepository.findById(generatedId);
+        assertThat(savedPostOptional).isPresent();
+        
+        var savedPost = savedPostOptional.get();
+        var savedTagNames = savedPost.getTags().stream().map(Tag::getName).toList();
+        
+        assertThat(savedTagNames)
+                .containsExactlyInAnyOrder("test_tag_0", "test_tag_1", "test_tag_2", "test_tag_3");
     }
 
 
     @Test
         // Returns status 200 and the updated Post
     void updateTest() throws Exception {
-        var user = modelGenerator.makeUser();
+        var user = userRepository.save(modelGenerator.makeUser());
         var post = modelGenerator.makePost(user);
         postRepository.save(post);
 
@@ -161,6 +201,15 @@ public class PostControllerTest {
         postUpdateDTO.setContent(postForUpdate.getContent());
         postUpdateDTO.setPublished(postForUpdate.isPublished());
         postUpdateDTO.setAuthorId(postForUpdate.getAuthor().getId());
+
+        var tags = new HashSet<TagCreateDTO>();
+        for (int i = 0; i < 4; i += 1) {
+            var dto = new TagCreateDTO();
+            dto.setName("test_tag_" + i);
+            tags.add(dto);
+        }
+
+        postUpdateDTO.setTags(tags);
 
         var content = mockMvc.perform(put("/api/posts/{id}", post.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -176,24 +225,40 @@ public class PostControllerTest {
                 jsonAssert -> jsonAssert.node("title").isEqualTo(postForUpdate.getTitle()),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(postForUpdate.getContent()),
                 jsonAssert -> jsonAssert.node("published").isEqualTo(postForUpdate.isPublished()),
-                jsonAssert -> jsonAssert.node("authorId").isEqualTo(postForUpdate.getAuthor().getId())
+                jsonAssert -> jsonAssert.node("authorId").isEqualTo(postForUpdate.getAuthor().getId()),
+                jsonAssert -> jsonAssert.node("tags").isArray().hasSize(tags.size())
         );
 
-        var resavedPost = postRepository.findById(post.getId());
-        assertThat(resavedPost).isPresent();
-        assertThat(resavedPost.get().getTitle()).isEqualTo(postForUpdate.getTitle());
+        var savedPostOptional = postRepository.findById(post.getId());
+        assertThat(savedPostOptional).isPresent();
+
+        var savedPost = savedPostOptional.get();
+        assertThat(savedPost.getTitle()).isEqualTo(postForUpdate.getTitle());
+
+        var savedTagNames = savedPost.getTags().stream().map(Tag::getName).toList();
+        assertThat(savedTagNames)
+                .containsExactlyInAnyOrder("test_tag_0", "test_tag_1", "test_tag_2", "test_tag_3");
     }
 
 
     @Test
         // Returns status 200 and the updated Post
     void partialUpdateTest() throws Exception {
-        var user = modelGenerator.makeUser();
+        var user = userRepository.save(modelGenerator.makeUser());
         var post = modelGenerator.makePost(user);
         postRepository.save(post);
 
         var postPatchDTO = new PostPatchDTO();
         postPatchDTO.setTitle(JsonNullable.of("NewTitle"));
+
+        var tags = new HashSet<TagCreateDTO>();
+        for (int i = 0; i < 4; i += 1) {
+            var dto = new TagCreateDTO();
+            dto.setName("test_tag_" + i);
+            tags.add(dto);
+        }
+
+        postPatchDTO.setTags(JsonNullable.of(tags));
 
         var content = mockMvc.perform(patch("/api/posts/{id}", post.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -209,12 +274,19 @@ public class PostControllerTest {
                 jsonAssert -> jsonAssert.node("title").isEqualTo("NewTitle"),
                 jsonAssert -> jsonAssert.node("content").isEqualTo(post.getContent()),
                 jsonAssert -> jsonAssert.node("published").isEqualTo(post.isPublished()),
-                jsonAssert -> jsonAssert.node("authorId").isEqualTo(post.getAuthor().getId())
+                jsonAssert -> jsonAssert.node("authorId").isEqualTo(post.getAuthor().getId()),
+                jsonAssert -> jsonAssert.node("tags").isArray().hasSize(tags.size())
         );
 
-        var resavedPost = postRepository.findById(post.getId());
-        assertThat(resavedPost).isPresent();
-        assertThat(resavedPost.get().getTitle()).isEqualTo("NewTitle");
+        var savedPostOptional = postRepository.findById(post.getId());
+        assertThat(savedPostOptional).isPresent();
+
+        var savedPost = savedPostOptional.get();
+        assertThat(savedPost.getTitle()).isEqualTo(postPatchDTO.getTitle().get());
+
+        var savedTagNames = savedPost.getTags().stream().map(Tag::getName).toList();
+        assertThat(savedTagNames)
+                .containsExactlyInAnyOrder("test_tag_0", "test_tag_1", "test_tag_2", "test_tag_3");
     }
 
 

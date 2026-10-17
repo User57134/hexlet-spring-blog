@@ -1,5 +1,6 @@
 package io.hexlet.spring.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -8,6 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openapitools.jackson.nullable.JsonNullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @NoArgsConstructor
 @Getter
@@ -25,6 +29,9 @@ public class PostUpdateDTO {
     private String content;
 
     private boolean published;
+
+    @Valid // для проверки, что теги не пустые
+    private Set<TagCreateDTO> tags = new HashSet<>();
 
     @NotNull(message = "ID пользователя обязателен для заполнения")
     @Positive(message = "ID пользователя - положительное число")

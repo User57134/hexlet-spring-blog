@@ -11,6 +11,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
@@ -27,12 +29,12 @@ public class Post implements BaseEntity {
     @Id
     @GeneratedValue(strategy = IDENTITY)
     @ToString.Include
-    @EqualsAndHashCode.Include
     private Long id;
 
     @NotNull
     @Column(unique = true)
     @ToString.Include
+    @EqualsAndHashCode.Include
     private String slug;
 
     @NotBlank(message = "Заглавие не должно быть пустым")
@@ -48,9 +50,6 @@ public class Post implements BaseEntity {
     private String content;
 
     @ManyToOne(
-            cascade = CascadeType.PERSIST,  // при сохранении сущности Post, будет сохранена сущность User (если такой
-                                            // нет в базе
-
             fetch = FetchType.LAZY          // ленивая загрузка пользователя - при запросе из базы подгружаются только данные
                                             // поста, данные об авторе подгружаются если сделать непосредственный запрос:
                                             // post.getAuthor();
@@ -61,10 +60,29 @@ public class Post implements BaseEntity {
     @Column(nullable = false)
     private boolean published;
 
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(
+            name="post_tag",
+            joinColumns=  @JoinColumn(name="post_id", referencedColumnName="id"),
+            inverseJoinColumns= @JoinColumn(name="tag_id", referencedColumnName="id")
+    )
+    private Set<Tag> tags = new HashSet<>();
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @LastModifiedDate
     private Instant updatedAt;
+
+
+    public void addTag(Tag tag) {
+        tags.add(tag);
+        tag.getPosts().add(this);
+    }
+
+    public void removeTag(Tag tag) {
+        tags.remove(tag);
+        tag.getPosts().remove(this);
+    }
 }

@@ -3,11 +3,13 @@ package io.hexlet.spring.controller.api;
 import io.hexlet.spring.dto.*;
 import io.hexlet.spring.exception.ResourceNotFoundException;
 import io.hexlet.spring.mapper.PostMapper;
-import io.hexlet.spring.model.Post;
+import io.hexlet.spring.model.Tag;
 import io.hexlet.spring.repository.PostRepository;
-import io.hexlet.spring.repository.UserRepository;
+import io.hexlet.spring.repository.TagRepository;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 
 
@@ -23,14 +26,20 @@ import java.util.List;
 @RequestMapping("/api/posts")
 public class PostController {
 
+    @Value("${app.page-size}")
+    private int maxPageSize;
+
     private final PostRepository postRepository;
+    private final TagRepository tagRepository;
     private final PostMapper postMapper;
 
     @Autowired
     public PostController(PostRepository repositoryOfPosts,
+                          TagRepository repositoryOfTags,
                           PostMapper mapper) {
 
         postRepository = repositoryOfPosts;
+        tagRepository = repositoryOfTags;
         postMapper = mapper;
     }
 
@@ -68,10 +77,10 @@ public class PostController {
                 }
             }
 
-            pageable = PageRequest.of(page, size, Sort.by(sortOrder));
+            pageable = PageRequest.of(page, Math.min(size, maxPageSize), Sort.by(sortOrder));
 
         } else {
-            pageable = PageRequest.of(page, size);
+            pageable = PageRequest.of(page, Math.min(size, maxPageSize));
         }
 
        return postRepository.findByPublishedTrue(pageable).map(postMapper::makeDTO);
@@ -90,6 +99,7 @@ public class PostController {
 
     @PostMapping(path = "")
     @ResponseStatus(HttpStatus.CREATED)
+    @Transactional
     public ResponseEntity<PostDTO> create(@Valid @RequestBody PostCreateDTO dto) {
         var post = postRepository.save(postMapper.makeEntity(dto));
 
@@ -106,6 +116,7 @@ public class PostController {
 
     @PutMapping(path = "/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @Transactional
     public PostDTO update(@PathVariable Long id, @Valid @RequestBody PostUpdateDTO data) {
         var post = postRepository.findById(id)
                 .orElseThrow(() ->
@@ -118,6 +129,7 @@ public class PostController {
 
     @PatchMapping(path = "/{id}")
     @ResponseStatus(HttpStatus.OK)
+    @Transactional
     public PostDTO partialUpdate(@PathVariable Long id, @RequestBody PostPatchDTO dto) {
         var post = postRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Post with the id =" + id + " not found"));
@@ -125,6 +137,25 @@ public class PostController {
         dto.getTitle().ifPresent(post::setTitle);
         dto.getContent().ifPresent(post::setContent);
         dto.getPublished().ifPresent(post::setPublished);
+
+        dto.getTags().ifPresent(tagDtos -> {
+            // Очищаем старый список тегов
+            var helperSet = new HashSet<>(post.getTags());
+            helperSet.forEach(post::removeTag);
+
+            // Навешиваем новые связи
+            if (tagDtos != null) {
+                tagDtos.forEach(tagDto -> {
+                    Tag tag = tagRepository.findByName(tagDto.getName())
+                            .orElseGet(() -> {
+                                Tag newTag = new Tag();
+                                newTag.setName(tagDto.getName());
+                                return newTag;
+                            });
+                    post.addTag(tag);
+                });
+            }
+        });
 
         return postMapper.makeDTO(postRepository.save(post));
     }

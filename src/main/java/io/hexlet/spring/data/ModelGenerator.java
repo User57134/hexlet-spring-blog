@@ -1,6 +1,7 @@
 package io.hexlet.spring.data;
 
 import io.hexlet.spring.model.Post;
+import io.hexlet.spring.model.Tag;
 import io.hexlet.spring.model.User;
 import io.hexlet.spring.repository.PostRepository;
 import io.hexlet.spring.repository.UserRepository;
@@ -27,6 +28,10 @@ public class ModelGenerator {
             userRepository.save(user);
 
             var post = makePost(user);
+
+            makeTag(post);
+            makeTag(post);
+
             postRepository.save(post);
         }
     }
@@ -49,6 +54,16 @@ public class ModelGenerator {
         post.setAuthor(user);
 
         return post;
+    }
+
+    public Tag makeTag(Post post) {
+        var tag = new Tag(faker.lorem().word());
+
+        if (post != null) {
+            post.addTag(tag);
+        }
+
+        return tag;
     }
 
 }

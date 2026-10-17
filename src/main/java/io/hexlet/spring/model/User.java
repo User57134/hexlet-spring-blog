@@ -52,9 +52,6 @@ public class User implements BaseEntity {
     @OneToMany(
             mappedBy = "author",        // сопоставляется по полю 'author';
 
-            cascade = CascadeType.ALL,  // все изменения над главной сущностью (пользователем) транслируются
-                                        // на зависимые сущности (посты);
-
             orphanRemoval = true,       // как только пост отвязывается от пользователя (становится сиротой),
                                         // то удаляется из хранилища постов;
 

@@ -1,5 +1,6 @@
 package io.hexlet.spring.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -7,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openapitools.jackson.nullable.JsonNullable;
+
+import java.util.Set;
 
 @NoArgsConstructor
 @Setter
@@ -21,6 +24,9 @@ public class PostPatchDTO {
     private JsonNullable<String> content = JsonNullable.undefined();
 
     private JsonNullable<Boolean> published = JsonNullable.undefined();
+
+    @Valid // для проверки, что теги не пустые
+    private JsonNullable<Set<TagCreateDTO>> tags = JsonNullable.undefined();
 
     @Positive(message = "ID пользователя - положительное число")
     private JsonNullable<Long> authorId = JsonNullable.undefined();
