@@ -6,6 +6,7 @@ import io.hexlet.spring.mapper.PostMapper;
 import io.hexlet.spring.model.Tag;
 import io.hexlet.spring.repository.PostRepository;
 import io.hexlet.spring.repository.TagRepository;
+import io.hexlet.spring.specification.PostSpecification;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,15 +33,18 @@ public class PostController {
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final PostMapper postMapper;
+    private final PostSpecification postSpecificationBuilder;
 
     @Autowired
     public PostController(PostRepository repositoryOfPosts,
                           TagRepository repositoryOfTags,
-                          PostMapper mapper) {
+                          PostMapper mapper,
+                          PostSpecification specification) {
 
         postRepository = repositoryOfPosts;
         tagRepository = repositoryOfTags;
         postMapper = mapper;
+        postSpecificationBuilder = specification;
     }
 
 
@@ -52,7 +56,7 @@ public class PostController {
         return ResponseEntity
                 .ok()
                 .header("X-Total-Count", String.valueOf(result.size()))
-                .body(result.stream().map(postMapper::makeDTO).toList());
+                .body(result.stream().map(postMapper::makeDTO).limit(limit).toList());
     }
 
 
@@ -63,6 +67,7 @@ public class PostController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt,desc") String sort) {
 
+        int pageSize = Math.min(size, maxPageSize);
         Pageable pageable = null;
 
         if ((sort != null) && (!sort.isBlank())) {
@@ -77,13 +82,30 @@ public class PostController {
                 }
             }
 
-            pageable = PageRequest.of(page, Math.min(size, maxPageSize), Sort.by(sortOrder));
+            pageable = PageRequest.of(page, pageSize, Sort.by(sortOrder));
 
         } else {
-            pageable = PageRequest.of(page, Math.min(size, maxPageSize));
+            pageable = PageRequest.of(page, pageSize);
         }
 
        return postRepository.findByPublishedTrue(pageable).map(postMapper::makeDTO);
+    }
+
+
+    @GetMapping("/filter")
+    @ResponseStatus(HttpStatus.OK)
+    public List<PostDTO> indexWithFilter(
+            PostParamsDTO params,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        int pageSize = Math.min(size, maxPageSize);
+
+        var spec = postSpecificationBuilder.build(params);
+        var pgPosts = postRepository.findAll(spec, PageRequest.of(page - 1, pageSize));
+        var pgPostsDTO = pgPosts.map(postMapper::makeDTO);
+
+        return pgPostsDTO.toList();
     }
 
 

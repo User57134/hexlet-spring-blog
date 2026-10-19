@@ -57,7 +57,7 @@ public class ModelGenerator {
     }
 
     public Tag makeTag(Post post) {
-        var tag = new Tag(faker.lorem().word());
+        var tag = new Tag(faker.unique().fetchFromYaml("lorem.words"));
 
         if (post != null) {
             post.addTag(tag);

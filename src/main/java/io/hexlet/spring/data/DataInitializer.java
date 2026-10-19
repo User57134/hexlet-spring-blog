@@ -1,10 +1,11 @@
 package io.hexlet.spring.data;
 
+import org.hibernate.generator.Generator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-
 
 @Component
 @Profile("dev") // 👈 Выполнится ТОЛЬКО в профиле dev. В тестах этот класс создаваться не будет.
@@ -13,9 +14,9 @@ public class DataInitializer implements ApplicationRunner {
 
     private final ModelGenerator modelGenerator;
 
-    // Внедряем наш генератор через конструктор
-    public DataInitializer(ModelGenerator modelGenerator) {
-        this.modelGenerator = modelGenerator;
+    @Autowired
+    DataInitializer(ModelGenerator generator) {
+        modelGenerator = generator;
     }
 
     @Override
