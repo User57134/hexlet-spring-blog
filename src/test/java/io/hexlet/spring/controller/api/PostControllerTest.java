@@ -120,9 +120,6 @@ public class PostControllerTest {
         var jsTag = new Tag("js");
         var goTag = new Tag("go");
 
-        // явное сохранение тегов во избежании путаницы при каскадном сохранении
-        //tagRepository.saveAll(List.of(pascalTag, cppTag, javaTag, phpTag, jsTag, goTag));
-
         // 1ый пользователь написал посты о pascal и c++
         var user = userRepository.save(modelGenerator.makeUser());
         var post1 = modelGenerator.makePost(user);
@@ -171,8 +168,6 @@ public class PostControllerTest {
         post9.addTag(cppTag);
         post9.addTag(goTag);
         postRepository.save(post9);
-
-        //postRepository.flush();
 
         //****** 1ый запрос GET /api/posts?tagId=1
         var result = mockMvc.perform(
