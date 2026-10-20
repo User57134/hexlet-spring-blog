@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,14 +25,16 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${app.page-size}")
     private int maxPageSize;
 
     @Autowired
-    public UserController(UserRepository repository, UserMapper mapper) {
+    public UserController(UserRepository repository, UserMapper mapper, PasswordEncoder encoder) {
         userRepository = repository;
         userMapper = mapper;
+        passwordEncoder = encoder;
     }
 
 
@@ -62,6 +65,7 @@ public class UserController {
         var user = userRepository.save(userMapper.makeEntity(dto));
 
         URI location = URI.create("/users/" + user.getId());
+
         return ResponseEntity.created(location).body(userMapper.makeDTO(user));
     }
 
@@ -85,10 +89,12 @@ public class UserController {
         var user = userRepository.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("User with the id =" + id + " not found"));
 
-        dto.getFirstName().ifPresent(user::setFirstName);
-        dto.getLastName().ifPresent(user::setLastName);
-        dto.getEmail().ifPresent(user::setEmail);
-        dto.getBirthday().ifPresent(user::setBirthday);
+//        dto.getFirstName().ifPresent(user::setFirstName);
+//        dto.getLastName().ifPresent(user::setLastName);
+//        dto.getEmail().ifPresent(user::setEmail);
+//        dto.getBirthday().ifPresent(user::setBirthday);
+
+        userMapper.updateEntity(user, dto);
 
         return userMapper.makeDTO(userRepository.save(user));
     }

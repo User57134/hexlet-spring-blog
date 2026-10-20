@@ -22,6 +22,9 @@ public class UserCreateDTO {
     @Size(min = 2, max = 50, message = "Фамилия должна содержать от 2 до 50 символов")
     private String lastName;
 
+    @NotBlank
+    private String password;
+
     @NotBlank(message = "Почта не должна быть пустой")
     @Email
     private String email;

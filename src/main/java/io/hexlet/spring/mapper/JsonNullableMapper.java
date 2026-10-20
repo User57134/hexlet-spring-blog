@@ -1,6 +1,5 @@
 package io.hexlet.spring.mapper;
 
-import io.hexlet.spring.model.User;
 import org.mapstruct.Condition;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;

@@ -1,6 +1,7 @@
 package io.hexlet.spring.dto;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -23,6 +24,9 @@ public class UserPatchDTO {
 
     @Email
     private JsonNullable<String> email = JsonNullable.undefined();
+
+    @NotBlank
+    private JsonNullable<String> password = JsonNullable.undefined();
 
     @Past
     private JsonNullable<LocalDate> birthday = JsonNullable.undefined();

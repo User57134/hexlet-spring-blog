@@ -11,6 +11,7 @@ import org.mapstruct.*;
         componentModel = MappingConstants.ComponentModel.SPRING,
         unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface TagMapper {
+
     TagDTO makeDTO(Tag tag);
 
     Tag makeEntity(TagCreateDTO dto);

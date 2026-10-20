@@ -1,7 +1,7 @@
 package io.hexlet.spring.controller.api;
 
 
-import io.hexlet.spring.data.ModelGenerator;
+import io.hexlet.spring.component.ModelGenerator;
 import io.hexlet.spring.dto.*;
 import io.hexlet.spring.repository.PostRepository;
 import io.hexlet.spring.repository.TagRepository;
@@ -15,14 +15,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
-
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false) // Полностью отключает Spring Security фильтры для этого теста
 @Transactional
 public class TagControllerTest {
     @Value("${app.page-size}")

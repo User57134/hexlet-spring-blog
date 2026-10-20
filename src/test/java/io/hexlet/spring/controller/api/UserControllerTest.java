@@ -1,12 +1,13 @@
 package io.hexlet.spring.controller.api;
 
 import com.jayway.jsonpath.JsonPath;
-import io.hexlet.spring.data.ModelGenerator;
-import io.hexlet.spring.dto.PostUpdateDTO;
+import io.hexlet.spring.component.ModelGenerator;
+import io.hexlet.spring.dto.UserPatchDTO;
 import io.hexlet.spring.dto.UserUpdateDTO;
 import io.hexlet.spring.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
+import org.openapitools.jackson.nullable.JsonNullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,10 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
-
-
 import java.time.LocalDate;
-
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -26,7 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @SpringBootTest
-@AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
+@AutoConfigureMockMvc(addFilters = false) // Полностью отключает Spring Security фильтры для этого теста
+//@AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
 @Transactional         // После прогона каждого теста, база возвращается в исходное состояние
 public class UserControllerTest {
 
@@ -53,7 +52,8 @@ public class UserControllerTest {
                     {
                     "firstName": "John",
                     "lastName": "Doe",
-                    "email": "john@example.com"
+                    "email": "john@example.com",
+                    "password": "1234567"
                     }
                 """;
 
@@ -84,6 +84,7 @@ public class UserControllerTest {
         userUpdateDTO.setLastName(dataForUpdate.getLastName());
         userUpdateDTO.setEmail(dataForUpdate.getEmail());
         userUpdateDTO.setBirthday(dataForUpdate.getBirthday());
+        userUpdateDTO.setPassword("12345678");
 
         var content = mockMvc.perform(put("/api/users/{id}", user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -101,6 +102,36 @@ public class UserControllerTest {
                 jsonAssert -> jsonAssert.node("birthday").isEqualTo(dataForUpdate.getBirthday())
         );
     }
+
+
+    @Test
+        // Returns status 200 and the updated User
+    void partialUpdateTest() throws Exception {
+        var user = userRepository.save(modelGenerator.makeUser());
+
+        var dataForUpdate = modelGenerator.makeUser();
+
+        var userPatchDTO = new UserPatchDTO();
+        userPatchDTO.setLastName(JsonNullable.of(dataForUpdate.getLastName()));
+        userPatchDTO.setPassword(JsonNullable.of("12345678"));
+
+        var content = mockMvc.perform(patch("/api/users/{id}", user.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(userPatchDTO)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThatJson(content).and(
+                jsonAssert -> jsonAssert.node("id").isEqualTo(user.getId()),
+                jsonAssert -> jsonAssert.node("firstName").isEqualTo(user.getFirstName()),
+                jsonAssert -> jsonAssert.node("lastName").isEqualTo(dataForUpdate.getLastName()),
+                jsonAssert -> jsonAssert.node("email").isEqualTo(user.getEmail()),
+                jsonAssert -> jsonAssert.node("birthday").isEqualTo(user.getBirthday())
+        );
+    }
+
 
     @Test
         // Returns 200 and List<User>

@@ -1,4 +1,4 @@
-package io.hexlet.spring.data;
+package io.hexlet.spring.component;
 
 import io.hexlet.spring.model.Post;
 import io.hexlet.spring.model.Tag;
@@ -42,6 +42,7 @@ public class ModelGenerator {
         user.setLastName(faker.name().lastName());
         user.setEmail(faker.internet().emailAddress());
         user.setBirthday(faker.timeAndDate().birthday());
+        user.setPasswordHash("Hash");
         return user;
     }
 

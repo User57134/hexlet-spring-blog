@@ -58,6 +58,11 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-devtools")
 
+    // Пакеты с модулями для аутентификации и проверке прав доступа
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+    testImplementation("org.springframework.security:spring-security-test")
+
     // Библиотека для генерации случайных данных
     implementation("net.datafaker:datafaker:2.7.0")
 
@@ -84,6 +89,8 @@ dependencies {
 }
 
 tasks.withType<Test> {
+    // Явное указание - установить профиль 'test' при выполнении тестов
+    systemProperty("spring.profiles.active", "test")
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }

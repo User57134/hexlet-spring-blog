@@ -1,7 +1,7 @@
 package io.hexlet.spring.controller.api;
 
 import com.jayway.jsonpath.JsonPath;
-import io.hexlet.spring.data.ModelGenerator;
+import io.hexlet.spring.component.ModelGenerator;
 import io.hexlet.spring.dto.PostCreateDTO;
 import io.hexlet.spring.dto.PostPatchDTO;
 import io.hexlet.spring.dto.PostUpdateDTO;
@@ -32,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @SpringBootTest
-@AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
+@AutoConfigureMockMvc(addFilters = false) // Полностью отключает Spring Security фильтры для этого теста
+//@AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
 @Transactional         // После прогона каждого теста, база возвращается в исходное состояние
 public class PostControllerTest {
 

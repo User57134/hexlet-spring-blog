@@ -1,6 +1,5 @@
 package io.hexlet.spring.dto;
 
-import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
@@ -26,6 +25,9 @@ public class UserUpdateDTO {
     @NotBlank(message = "Почта не должна быть пустой")
     @Email
     private String email;
+
+    @NotBlank
+    private String password;
 
     @Past
     private LocalDate birthday;
