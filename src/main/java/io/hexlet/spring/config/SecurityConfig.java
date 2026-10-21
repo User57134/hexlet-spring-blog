@@ -1,7 +1,6 @@
 package io.hexlet.spring.config;
 
 import io.hexlet.spring.service.CustomUserDetailsService;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,8 +35,11 @@ public class SecurityConfig {
 
                 // 2. Настраиваем правила доступа
                 .authorizeHttpRequests(auth -> auth
+                        // Важно: разрешаем системный путь обработки ошибок
+                        .requestMatchers("/error", "/error/**").permitAll()
+
                         // Статический фронтенд и ресурсы
-                        .requestMatchers("/", "/index.html", "/assets/**").permitAll()
+                        .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/img/**").permitAll()
 
                         // Публичные эндпоинты API (включая все вложенные пути страниц)
                         .requestMatchers("/api/login", "/api/pages", "/api/pages/**").permitAll()

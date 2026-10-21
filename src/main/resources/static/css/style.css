@@ -1,0 +1,37 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Arial', sans-serif;
+  background-color: #1a1a1a; /* Темный стильный фон */
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  overflow-x: hidden; /* Прячем горизонтальный скролл страницы */
+}
+
+/* Контейнер для бегущей строки */
+h1 {
+  width: 100%;
+  white-space: nowrap;     /* Запрещаем перенос текста на новую строку */
+  overflow: hidden;        /* Прячем текст, который выходит за границы экрана */
+  box-sizing: border-box;
+  font-size: 3rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 2rem;
+
+  /* Эффект свечения для текста (по желанию) */
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+/* Стили для логотипа */
+img {
+  max-width: 200px;        /* Ограничиваем максимальную ширину */
+  height: auto;            /* Сохраняем пропорции */
+  display: block;
+  border-radius: 10px;     /* Слегка скругляем углы логотипа */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Добавляем тень */
+}
