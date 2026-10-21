@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false) // Полностью отключает Spring Security фильтры для этого теста
+@ActiveProfiles("test")
 //@AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
 @Transactional         // После прогона каждого теста, база возвращается в исходное состояние
 public class PostControllerTest {
@@ -43,7 +45,6 @@ public class PostControllerTest {
     private final MockMvc mockMvc;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final TagRepository tagRepository;
     private final ModelGenerator modelGenerator;
     private final ObjectMapper objectMapper;
 
@@ -51,14 +52,12 @@ public class PostControllerTest {
     public PostControllerTest(MockMvc mock,
                               PostRepository repositoryOfPosts,
                               UserRepository repositoryOfUsers,
-                              TagRepository repositoryOfTags,
                               ModelGenerator generator,
                               ObjectMapper mapper) {
 
         mockMvc = mock;
         postRepository = repositoryOfPosts;
         userRepository = repositoryOfUsers;
-        tagRepository = repositoryOfTags;
         modelGenerator = generator;
         objectMapper = mapper;
     }

@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL}
+
+  jpa:
+    hibernate:
+      ddl-auto: none                            # Полный запрет на изменение схемы со стороны JPA/Hibernate
+
+  output:
+    ansi:
+      enabled: never                            # Цветной вывод отключен
+
+logging:
+  level:
+    org.hibernate.SQL: WARN                     # Отключени вывод SQL
+
+
+server:
+  error:
+    include-stacktrace: never                   # Трассировка стека не включается в автоматические HTTP-ответы сервера

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-@Profile("!test") // 👈 Выполнится во всех профилях, кроме профиля 'test'.
+@Profile("dev") // 👈 Выполнится во всех профилях, кроме профиля 'test'.
 // ApplicationRunner используется для выполнения определенного кода сразу после полного запуска приложения
 public class DataInitializer implements ApplicationRunner {
 

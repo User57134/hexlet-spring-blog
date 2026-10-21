@@ -89,8 +89,6 @@ dependencies {
 }
 
 tasks.withType<Test> {
-    // Явное указание - установить профиль 'test' при выполнении тестов
-    systemProperty("spring.profiles.active", "test")
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
 }

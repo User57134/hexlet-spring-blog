@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false) // Полностью отключает Spring Security фильтры для этого теста
+@ActiveProfiles("test")
 //@AutoConfigureMockMvc  // Создает бин MockMvc и кладет его в контекст
 @Transactional         // После прогона каждого теста, база возвращается в исходное состояние
 public class UserControllerTest {

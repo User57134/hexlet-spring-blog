@@ -1,0 +1,10 @@
+spring:
+  datasource:                                   # Настройка источника данных
+    url: jdbc:h2:mem:testdb                     # url базы данных
+    driver-class-name: org.h2.Driver            # название класса драйвера для базы H2
+    username: sa                                # пользователь по-умолчанию в H2 (sa - system administrator)
+    password:                                   # пароль по умолчанию пустой
+
+  h2:
+    console:
+      enabled: true                             # Включение web-консоли H2

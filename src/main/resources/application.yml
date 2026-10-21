@@ -1,31 +1,35 @@
-spring:
-  datasource:                                   # Настройка источника данных
-    url: jdbc:h2:mem:testdb                     # url базы данных
-    driverClassName: org.h2.Driver              # название класса драйвера для базы H2
-    username: sa                                # пользователь по-умолчанию в H2 (sa - system administrator)
-    password:                                   # пароль по умолчанию пустой
+server:
+  port: ${PORT:8080}
 
-  h2:
-    console:
-      enabled: true                             # Включение web-консоли H2
+spring:
+  profiles:
+    default: dev                                # По-умолчанию запускается с профилем 'dev'
 
   jpa:
-    show-sql: true                              # вывод SQL-запросов
-    generate-ddl: true                          # разрешить Spring генерировать таблицы на основе сущностей
+    hibernate:
+      ddl-auto: update                          # Автоматически обновляет таблицы при изменении Entity
 
   output:
     ansi:
-      enabled: always                           # цветной вывод логотипа
+      enabled: always                           # Цветной вывод
 
 logging:
+  level:
+    org.hibernate.SQL: DEBUG                    # Включает правильное логирование SQL-запросов в Spring Boot
+                                                # через стандартный фреймворк логирования (SLF4J/Logback),
+                                                # используется вместо 'spring.jpa.show-sql: true'
+
   pattern:
-    dateformat: "yyyy-MM-dd HH:mm:ss"           # настраиваемый формат даты в логах
+    dateformat: "yyyy-MM-dd HH:mm:ss"           # Настраиваемый формат даты в логах
+
 
 app:
-  welcome-message: "Welcome to Spring blog!"    # сообщение в собственном параметре
-  page-size: 5
+  welcome-message: "Welcome to Spring blog!"    # Сообщение в собственном параметре
+
+  page-size: 5                                  # Максимальное число записей в странице ответа на запрос
+
   admin-email: "admin@mail.com"
 
 rsa:
-  private-key: classpath:certs/private.pem      # закрытый ключ
-  public-key: classpath:certs/public.pem        # открытый ключ
+  private-key: classpath:certs/private.pem      # Закрытый ключ
+  public-key: classpath:certs/public.pem        # Открытый ключ
