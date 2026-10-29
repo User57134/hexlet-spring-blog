@@ -5,14 +5,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice
+
+/**
+ * Параметр basePackages = "io.hexlet.spring.controller.api", указывает,
+ * что обработчики будут применяться только к коду из указанного пакета.
+ * Для все остального предполагается выводить страницы. Это дает возможность
+ * сделать страницы ошибок, например 404.html, и отображать их в случае
+ * несуществующего Url. Иначе обработчик бы перехватился.
+ */
+@RestControllerAdvice(basePackages = "io.hexlet.spring.controller.api")
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
